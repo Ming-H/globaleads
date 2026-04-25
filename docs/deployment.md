@@ -214,8 +214,43 @@ docker-compose -f docker-compose.server.yml restart backend celery
 
 ### 4.2 查看日志
 
+日志文件存储在 `/home/admin/globaleads/logs/`，通过 Docker Volume 持久化。
+
+#### 文件日志（推荐）
+
+| 文件 | 内容 | 轮转策略 | 磁盘上限 |
+|------|------|---------|---------|
+| `app.log` | 全量日志（API 请求、认证、业务操作） | 20MB x 3 | 60MB |
+| `error.log` | 仅 ERROR 及以上 | 10MB x 2 | 20MB |
+| `task.log` | Celery 任务执行日志 | 20MB x 2 | 40MB |
+
 ```bash
-# 后端日志
+# 实时查看应用日志
+tail -f /home/admin/globaleads/logs/app.log
+
+# 实时查看任务日志
+tail -f /home/admin/globaleads/logs/task.log
+
+# 查看最近错误
+tail -20 /home/admin/globaleads/logs/error.log
+
+# 按请求追踪 ID 查询完整链路
+grep "request_id=abc123" /home/admin/globaleads/logs/app.log
+
+# 按任务 ID 查询执行过程
+grep "task_id=5" /home/admin/globaleads/logs/task.log
+
+# 查看今天的认证事件
+grep "auth" /home/admin/globaleads/logs/app.log | grep "$(date +%Y-%m-%d)"
+
+# 查看所有 4xx/5xx 请求
+grep -E " [45][0-9]{2} " /home/admin/globaleads/logs/app.log
+```
+
+#### Docker 容器日志（stdout 镜像）
+
+```bash
+# 实时查看
 docker logs -f globaleads-backend
 docker logs -f globaleads-celery
 

@@ -205,7 +205,66 @@ def crawl_social_media(self, task_id: int):
 
 ---
 
-## 4. 前端开发规范
+## 4. 日志使用规范
+
+### 4.1 日志系统架构
+
+详见 [技术架构文档 - 日志系统](architecture.md#8-日志系统)。
+
+三个日志文件：
+- `logs/app.log` — 全量日志（INFO+），自动轮转 20MB x 3
+- `logs/error.log` — 仅 ERROR，自动轮转 10MB x 2
+- `logs/task.log` — Celery 任务日志，自动轮转 20MB x 2
+
+### 4.2 在代码中使用日志
+
+```python
+import logging
+
+# 获取 logger（按模块命名）
+logger = logging.getLogger(__name__)
+
+# API 路由 / 业务服务
+logger.info("创建社媒任务 | keywords=%s platforms=%s", keywords, platforms)
+logger.warning("Reddit 接近速率限制 | used=%d limit=%d", used, limit)
+logger.error("LLM 调用失败 | error=%s", str(e), exc_info=True)
+
+# Celery 任务（使用专用 logger，日志写入 task.log）
+from app.core.logging_config import get_task_logger
+logger = get_task_logger("social_crawl")
+logger.info("[task_id=%d] 任务开始 | keywords=%s", task_id, keywords)
+logger.info("[task_id=%d] 任务完成 | found=%d leads", task_id, count)
+
+# 第三方服务（使用服务 logger）
+from app.core.logging_config import get_service_logger
+logger = get_service_logger("reddit")
+logger.info("搜索帖子 | keyword=%s limit=%d", keyword, limit)
+```
+
+### 4.3 日志记录原则
+
+**必须记录：**
+- 关键业务操作（任务创建、状态变更）
+- 外部 API 调用（平台、参数、结果数量、耗时）
+- 错误和异常（带 `exc_info=True` 记录堆栈）
+
+**禁止记录：**
+- 密码、Token、API Key
+- 线索原始内容全文
+- 请求/响应体中的大段文本
+
+**格式规范：**
+```python
+# 用 | 分隔键值对，方便 grep
+logger.info("操作描述 | key1=%s key2=%s", val1, val2)
+
+# 错误必须带 exc_info
+logger.error("操作失败 | context=%s | error=%s", ctx, str(e), exc_info=True)
+```
+
+---
+
+## 5. 前端开发规范
 
 ### 4.1 代码风格
 
