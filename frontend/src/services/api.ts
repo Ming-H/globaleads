@@ -1,12 +1,7 @@
 import axios from 'axios';
 
-// 生产环境直接使用 API 域名，开发环境走代理
-const API_BASE_URL = import.meta.env.DEV
-  ? '/api/v1'
-  : (import.meta.env.VITE_API_BASE_URL || 'https://globaleads-api.devfoxai.cn/api/v1');
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: 'https://globaleads-api.devfoxai.cn/api/v1',
   timeout: 30000,
 });
 
