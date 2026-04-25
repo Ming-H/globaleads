@@ -3,6 +3,7 @@ GlobalLeads FastAPI 主应用
 
 海外线索挖掘平台 - 帮助中国外贸/跨境电商企业挖掘海外销售线索
 """
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -10,20 +11,31 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.logging_config import setup_logging
+from app.middleware.logging import LoggingMiddleware
 from app.api.v1 import api_router
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时初始化
+    # 初始化日志系统（最先执行）
+    setup_logging()
+    logger.info("GlobalLeads API 启动中...")
+
+    # 初始化数据库
     await init_db()
     await create_default_data()
 
+    logger.info("GlobalLeads API 启动完成 | port=%s", settings.PORT)
+
     yield
 
-    # 关闭时清理
+    logger.info("GlobalLeads API 关闭中...")
     await close_db()
+    logger.info("GlobalLeads API 已关闭")
 
 
 app = FastAPI(
@@ -41,6 +53,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 请求日志中间件
+app.add_middleware(LoggingMiddleware)
 
 # 注册路由
 app.include_router(api_router, prefix="/api/v1")
@@ -64,7 +79,6 @@ async def health():
     checks = {}
     overall_ok = True
 
-    # 检查 PostgreSQL
     try:
         from sqlalchemy import text
         from app.core.database import async_session
@@ -75,7 +89,6 @@ async def health():
         checks["database"] = f"error: {e}"
         overall_ok = False
 
-    # 检查 Redis
     try:
         import redis.asyncio as aioredis
         r = aioredis.from_url(settings.REDIS_URL)
@@ -101,7 +114,6 @@ async def create_default_data():
     from app.core.security import hash_password
 
     async with async_session() as db:
-        # 检查是否已有管理员账号
         result = await db.execute(
             select(User).where(User.username == "admin")
         )
@@ -116,7 +128,7 @@ async def create_default_data():
             )
             db.add(admin)
             await db.commit()
-            print("默认管理员账号已创建 (admin / admin123)")
+            logger.info("默认管理员账号已创建 (admin)")
 
 
 if __name__ == "__main__":
@@ -124,6 +136,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8001,
+        port=settings.PORT,
         reload=True,
     )

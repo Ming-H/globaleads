@@ -290,6 +290,87 @@ GlobalLeads 部署在同一台阿里云服务器上，与 LeadMine 共用：
 不共用的：
 | 资源 | 独立 |
 |------|------|
-| FastAPI 进程 | 独立，不同端口（LeadMine :8000, GlobalLeads :8001） |
+| FastAPI 进程 | 独立，不同端口（LeadMine :8000, GlobalLeads :8002） |
 | Celery Worker | 独立，不同队列名 |
 | 前端 | 独立部署在 Vercel |
+
+---
+
+## 8. 日志系统
+
+### 8.1 架构
+
+```
+请求/任务 → Python logging → RotatingFileHandler → /app/logs/*.log
+                                                    ↓
+                                              Docker Volume 挂载
+                                                    ↓
+                                       /home/admin/globaleads/logs/
+```
+
+### 8.2 日志文件
+
+| 文件 | 内容 | 轮转策略 | 磁盘上限 |
+|------|------|---------|---------|
+| `app.log` | 全部日志（INFO+），含 API 请求、认证、业务操作 | 20MB x 3 备份 | 60MB |
+| `error.log` | 仅 ERROR 及以上 | 10MB x 2 备份 | 20MB |
+| `task.log` | Celery 任务执行日志 | 20MB x 2 备份 | 40MB |
+| **合计** | | | **120MB** |
+
+### 8.3 日志格式
+
+```
+2026-04-25 10:30:15.123 [INFO] [request_id=abc123] api.access: POST /api/v1/auth/login 200 45ms user=admin
+2026-04-25 10:30:20.456 [INFO] [task_id=5] task.social_crawl: 开始执行 - keywords=["LED"] platforms=["reddit"]
+2026-04-25 10:31:05.789 [INFO] [task_id=5] task.social_crawl: 完成 - 获取 120 条原始内容, 筛选 12 条线索
+2026-04-25 10:31:10.012 [WARNING] service.reddit: 接近速率限制 (55/60 req/min)
+2026-04-25 10:32:00.345 [ERROR] [request_id=def456] service.ai_service: LLM 调用失败 - ConnectionTimeout(url=..., timeout=60s)
+```
+
+格式：`{时间} [{级别}] [{追踪ID}] {模块}: {消息} {上下文详情}`
+
+### 8.4 追踪 ID
+
+- **API 请求**：每个请求生成唯一 `request_id`（UUID 短码），贯穿请求全链路日志
+- **Celery 任务**：使用 `task_id`（数据库任务 ID），贯穿任务执行全链路
+
+### 8.5 记录规则
+
+**必须记录：**
+- 每个 API 请求（方法、路径、状态码、耗时、用户）
+- 认证事件（登录成功/失败、Token 过期）
+- 任务生命周期（开始、进度、完成、失败）
+- 第三方 API 调用（平台、耗时、结果数量）
+- AI 分析调用（模型、耗时、评分分布）
+- 错误和异常（堆栈 + 上下文）
+
+**禁止记录：**
+- 密码、Token、API Key 等敏感信息
+- 线索原始内容全文（仅记录数量和评分）
+- 请求/响应体中的大段文本
+
+### 8.6 模块结构
+
+```
+app/core/logging.py       # 日志配置（格式、Handler、轮转）
+app/middleware/logging.py  # FastAPI 请求日志中间件（自动注入 request_id）
+```
+
+### 8.7 运维命令
+
+```bash
+# 查看实时日志
+tail -f /home/admin/globaleads/logs/app.log
+
+# 查看错误
+grep ERROR /home/admin/globaleads/logs/error.log | tail -20
+
+# 按追踪 ID 查询完整请求链路
+grep "request_id=abc123" /home/admin/globaleads/logs/app.log
+
+# 按任务 ID 查询任务执行过程
+grep "task_id=5" /home/admin/globaleads/logs/task.log
+
+# Docker 容器日志（stdout 镜像）
+docker logs -f globaleads-backend --tail 100
+```

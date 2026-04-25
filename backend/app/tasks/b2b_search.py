@@ -20,8 +20,11 @@ from sqlalchemy.orm import sessionmaker
 
 from app.tasks.celery_app import celery_app
 from app.core.config import settings
+from app.core.logging_config import setup_logging, get_task_logger
 
-logger = logging.getLogger(__name__)
+# Celery Worker 启动时初始化日志
+setup_logging()
+logger = get_task_logger("b2b_search")
 
 
 def _get_sync_db():
