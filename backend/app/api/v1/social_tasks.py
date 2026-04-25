@@ -75,7 +75,8 @@ async def create_social_task(
     celery_result = crawl_social_media.delay(task.id)
     task.celery_task_id = celery_result.id
     task.status = "running"
-    await db.flush()
+    await db.commit()
+    await db.refresh(task)
 
     return SocialTaskResponse.model_validate(task)
 

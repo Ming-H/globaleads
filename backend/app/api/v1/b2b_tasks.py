@@ -76,7 +76,8 @@ async def create_b2b_task(
     celery_result = search_b2b_companies.delay(task.id)
     task.celery_task_id = celery_result.id
     task.status = "running"
-    await db.flush()
+    await db.commit()
+    await db.refresh(task)
 
     return B2BTaskResponse.model_validate(task)
 
