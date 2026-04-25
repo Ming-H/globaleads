@@ -1,0 +1,40 @@
+# 生产环境 Docker Compose
+# 使用方式：docker-compose -f docker-compose.server.yml up -d
+# 注意：PostgreSQL 和 Redis 使用已有的容器，通过 external network 连接
+
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: globaleads-backend
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=8001
+    networks:
+      - shared-network
+    depends_on:
+      - celery
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: globaleads-celery
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=1 -Q globaleads
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true
+    name: devfox-network
