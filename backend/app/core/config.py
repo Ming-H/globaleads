@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # Hunter.io API
     HUNTER_API_KEY: str = ""
 
+    # Celery
+    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
+
+    # 服务端口
+    PORT: int = 8002
+
     # 分页
     DEFAULT_PAGE_SIZE: int = 20
     MAX_PAGE_SIZE: int = 100

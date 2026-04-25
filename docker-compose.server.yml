@@ -1,8 +1,6 @@
 # 生产环境 Docker Compose
-# 使用方式：docker-compose -f docker-compose.server.yml up -d
-# 注意：PostgreSQL 和 Redis 使用已有的容器，通过 external network 连接
-
-version: "3.8"
+# 使用方式：docker compose -f docker-compose.server.yml up -d --build
+# PostgreSQL 和 Redis 复用 LeadMine 已有的容器，通过 leadmine_default 网络连接
 
 services:
   backend:
@@ -12,15 +10,13 @@ services:
     container_name: globaleads-backend
     restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "8002:8002"
     env_file:
       - ./backend/.env
     environment:
-      - PORT=8001
+      - PORT=8002
     networks:
-      - shared-network
-    depends_on:
-      - celery
+      - leadmine_default
 
   celery:
     build:
@@ -32,9 +28,8 @@ services:
       - ./backend/.env
     command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=1 -Q globaleads
     networks:
-      - shared-network
+      - leadmine_default
 
 networks:
-  shared-network:
+  leadmine_default:
     external: true
-    name: devfox-network
