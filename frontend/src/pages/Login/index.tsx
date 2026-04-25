@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,14 +8,13 @@ const { Title, Text } = Typography;
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
       await login(values.username, values.password);
       message.success('登录成功');
-      navigate('/', { replace: true });
+      window.location.href = '/';
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } };
       message.error(err.response?.data?.detail || '登录失败，请检查用户名和密码');
