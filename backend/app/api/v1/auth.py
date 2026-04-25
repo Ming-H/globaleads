@@ -40,7 +40,7 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
         )
 
     # 生成 JWT
-    token = create_access_token(data={"sub": user.id})
+    token = create_access_token(data={"sub": str(user.id)})
     expires_in = settings.JWT_EXPIRE_HOURS * 3600
 
     return TokenResponse(
