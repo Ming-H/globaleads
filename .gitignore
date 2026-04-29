@@ -31,4 +31,10 @@ docker-compose.override.yml
 # Database
 *.sql
 !migrations/*.sql
+
+# Test
+.coverage
+htmlcov/
+.pytest_cache/
+
 .vercel
