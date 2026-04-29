@@ -2,7 +2,7 @@
 
 > 版本：v1.0
 > 日期：2026-04-25
-> Base URL: `http://<server>:8001/api/v1`
+> Base URL: `http://<server>:8002/api/v1`
 
 ---
 
@@ -55,7 +55,7 @@
 |------|------|------|
 | page | int | 页码，默认 1 |
 | page_size | int | 每页数量，默认 20 |
-| status | string | 筛选状态：pending/running/completed/failed |
+| status_filter | string | 筛选状态：pending/running/completed/failed |
 
 **响应：**
 ```json
@@ -69,12 +69,20 @@
       "platforms": ["reddit", "bluesky"],
       "status": "completed",
       "lead_count": 23,
+      "error_message": null,
+      "celery_task_id": "xxx-xxx-xxx",
+      "config": {},
       "created_at": "2026-04-25T10:00:00Z",
       "updated_at": "2026-04-25T10:05:00Z"
     }
   ]
 }
 ```
+
+**字段说明：**
+- `error_message`: 失败时的错误信息（仅 failed 状态有值）
+- `celery_task_id`: Celery 异步任务 ID，用于追踪任务执行
+- `config`: 额外配置（如语言、地区等）
 
 ### POST /social-tasks
 
@@ -133,7 +141,7 @@
 | platform | string | 按平台筛选：reddit/bluesky/youtube |
 | min_score | int | 最低意向评分 |
 | tag | string | 按意向标签筛选 |
-| status | string | 按联系状态：uncontacted/contacted/replied/invalid |
+| status_filter | string | 按联系状态：uncontacted/contacted/replied/invalid |
 | sort_by | string | 排序字段：score/created_at |
 | sort_order | string | asc/desc |
 
@@ -153,12 +161,16 @@
       "published_at": "2026-04-24T15:30:00Z",
       "ai_score": 85,
       "ai_tags": ["求购", "找供应商"],
+      "ai_analysis": "该用户正在寻找LED照明供应商，表现出明确的采购意向...",
       "status": "uncontacted",
       "created_at": "2026-04-25T10:02:00Z"
     }
   ]
 }
 ```
+
+**字段说明：**
+- `ai_analysis`: AI 分析的详细结果文本
 
 ### GET /social-leads/{lead_id}
 
@@ -190,7 +202,7 @@
 }
 ```
 
-**响应：** 返回文件流（CSV/Excel）
+**响应：** 返回文件流（当前仅支持 CSV，Excel 导出待实现）
 
 ---
 
@@ -205,7 +217,7 @@
 |------|------|------|
 | page | int | 页码 |
 | page_size | int | 每页数量 |
-| status | string | 筛选状态 |
+| status_filter | string | 筛选状态 |
 
 **响应：**
 ```json
@@ -273,7 +285,7 @@
 | region | string | 按地区筛选 |
 | data_source | string | 按数据源筛选：apollo/google_maps |
 | has_email | bool | 是否有邮箱 |
-| status | string | 联系状态 |
+| status_filter | string | 联系状态 |
 
 **响应：**
 ```json
@@ -292,14 +304,20 @@
       "contact_name": "Sarah Johnson",
       "contact_title": "Purchasing Manager",
       "contact_email": "sarah@brightled.com",
+      "contact_phone": "+1-555-0123",
       "email_verified": true,
       "data_source": "apollo",
+      "source_url": "https://apollo.io/...",
       "status": "uncontacted",
       "created_at": "2026-04-25T10:03:00Z"
     }
   ]
 }
 ```
+
+**字段说明：**
+- `contact_phone`: 联系人电话（可选）
+- `source_url`: 来源页面 URL（Apollo/GMaps 原始链接）
 
 ### GET /b2b-leads/{lead_id}
 
@@ -311,7 +329,7 @@
 
 ### POST /b2b-leads/export
 
-导出线索。
+导出线索（当前仅支持 CSV，Excel 导出待实现）。
 
 ---
 
@@ -362,8 +380,10 @@
   "api_usage": {
     "reddit": { "used": 1200, "limit": "60/min" },
     "bluesky": { "used": 800, "limit": "3000/5min" },
+    "youtube": { "used": 500, "limit": 10000 },
     "apollo": { "used": 200, "limit": 900 },
-    "google_maps": { "used": 500, "limit": 6250 }
+    "google_maps": { "used": 500, "limit": 6250 },
+    "hunter": { "used": 10, "limit": 25 }
   }
 }
 ```
@@ -385,6 +405,20 @@
 ### GET /settings/api-usage
 
 查看各 API 当前用量和剩余额度。
+
+**响应：**
+```json
+{
+  "reddit": { "used": 1200, "limit": "60/min", "remaining": null },
+  "bluesky": { "used": 800, "limit": "3000/5min", "remaining": null },
+  "youtube": { "used": 500, "limit": 10000, "remaining": 9500 },
+  "apollo": { "used": 200, "limit": 900, "remaining": 700 },
+  "google_maps": { "used": 500, "limit": 6250, "remaining": 5750 },
+  "hunter": { "used": 10, "limit": 25, "remaining": 15 }
+}
+```
+
+> 注：`remaining` 字段仅对有月度/日度配额的 API 返回，速率限制类 API（Reddit/Bluesky）为 null。
 
 ### GET /settings/ai-config
 

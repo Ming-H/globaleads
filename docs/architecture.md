@@ -25,14 +25,14 @@
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │              Nginx (:80 / :443)                      │   │
-│  │  globaleads.devfoxai.cn/api/* → FastAPI :8001       │   │
+│  │  globaleads.devfoxai.cn/api/* → FastAPI :8002       │   │
 │  │  leadmine.devfoxai.cn/api/*   → FastAPI :8000       │   │
 │  └──────────────────────────┬──────────────────────────┘   │
 │                             │                               │
 │  ┌──────────┐  ┌──────────┐  ┌───────┐  ┌───────────────┐  │
 │  │ FastAPI   │  │ Celery   │  │ Redis │  │ PostgreSQL    │  │
 │  │ Backend   │←→│ Worker   │  │       │  │               │  │
-│  │ :8001     │  │          │  │ :6379 │  │ :5432         │  │
+│  │ :8002     │  │          │  │ :6379 │  │ :5432         │  │
 │  └──────────┘  └────┬─────┘  └───────┘  └───────────────┘  │
 │                      │                                       │
 │                      ├──→ Reddit API                         │
@@ -222,7 +222,7 @@ frontend/
   获取公司列表 + 联系人
         │
         ▼
-  调用 Hunter.io / Snov.io 获取邮箱
+  调用 Hunter.io 获取邮箱
         │
         ▼
   邮箱验证（API 验证）
@@ -269,7 +269,7 @@ elif AI_PROVIDER == "deepseek":
 | YouTube | 10,000 配额单位/天 | 每日配额计数 |
 | Apollo | 900 积分/月 | 月度积分计数 |
 | Google Maps | 6,250 次/月 | 月度请求计数 |
-| Snov.io | 50 积分/月 | 月度积分计数 |
+| Hunter.io | 25 积分/月 | 月度积分计数 |
 | Hunter.io | 25 积分/月 | 月度积分计数 |
 
 额度不足时任务标记为 `quota_exceeded`，提示用户。

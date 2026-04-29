@@ -15,12 +15,12 @@
 │  │              Nginx (:80 / :443)                  │  │
 │  │                                                 │  │
 │  │  leadmine.devfoxai.cn/api/*   → :8000           │  │
-│  │  globaleads.devfoxai.cn/api/* → :8001           │  │
+│  │  globaleads.devfoxai.cn/api/* → :8002           │  │
 │  └──────────────────────┬──────────────────────────┘  │
 │                         │                             │
 │  ┌──────────────┐  ┌───┴──────────┐                  │
 │  │  LeadMine    │  │ GlobalLeads  │                  │
-│  │  :8000       │  │  :8001       │                  │
+│  │  :8000       │  │  :8002       │                  │
 │  │  (已有)       │  │  (新增)       │                  │
 │  └──────────────┘  └──────────────┘                  │
 │                                                      │
@@ -50,7 +50,7 @@
         │
         └── /api/* 请求 → DNS A记录 → 阿里云 Nginx
                               │
-                              ├── Host: globaleads.devfoxai.cn → :8001
+                              ├── Host: globaleads.devfoxai.cn → :8002
                               └── Host: leadmine.devfoxai.cn   → :8000
 ```
 
@@ -63,7 +63,7 @@
 | 服务 | 端口 | 说明 |
 |------|------|------|
 | LeadMine Backend | 8000 | 已有 |
-| GlobalLeads Backend | 8001 | 新增 |
+| GlobalLeads Backend | 8002 | 新增 |
 | PostgreSQL | 5432 | 共用 |
 | Redis | 6379 | 共用 |
 | Ollama | 11434 | 已有 |
@@ -77,18 +77,21 @@
 
 ### 2.3 内存预算
 
-| 服务 | 预估内存 |
-|------|---------|
-| LeadMine Backend + Celery | ~500MB（已有） |
-| PostgreSQL | ~150MB |
-| Redis | ~50MB |
-| GlobalLeads Backend | ~200MB |
-| GlobalLeads Celery | ~150MB |
-| Ollama | ~300MB |
-| 系统 + 其他 | ~300MB |
-| **总计** | **~1.65GB / 1.9GB** |
+Docker 容器已设置内存限制（`mem_limit`），防止单个服务内存泄漏拖垮整台服务器。
 
-> 注意：内存紧张，需控制 Celery 并发数为 1，限制 worker 内存。
+| 服务 | 预估内存 | mem_limit | 说明 |
+|------|---------|-----------|------|
+| LeadMine Backend | ~80MB | 256MB | FastAPI |
+| LeadMine Celery | ~60MB | 256MB | 并发=1 |
+| GlobalLeads Backend | ~80MB | 256MB | FastAPI |
+| GlobalLeads Celery | ~60MB | 256MB | 并发=1 |
+| PostgreSQL | ~150MB | 300MB | 共享 |
+| Redis | ~30MB | 100MB | 共享 |
+| Ollama | ~300MB | 512MB | AI 模型 |
+| Nginx + 系统 | ~300MB | — | 非容器化 |
+| **总计** | **~1060MB** | **~1936MB** | **/ 2048MB** |
+
+> Celery 并发数限制为 1，每个容器设有 healthcheck，异常时自动检测。
 
 ---
 
@@ -152,11 +155,9 @@ YOUTUBE_API_KEY=<youtube_api_key>
 APOLLO_API_KEY=<apollo_api_key>
 GOOGLE_MAPS_API_KEY=<google_maps_api_key>
 HUNTER_API_KEY=<hunter_api_key>
-SNOV_API_KEY=<snov_api_key>
-SNOV_API_SECRET=<snov_api_secret>
 
 # 服务端口
-PORT=8001
+PORT=8002
 ```
 
 #### Step 4：Docker Compose 启动
@@ -183,7 +184,7 @@ docker-compose -f docker-compose.server.yml up -d
 
 在 Vercel 项目设置中添加：
 ```
-VITE_API_BASE_URL=https://<服务器IP或域名>:8001/api/v1
+VITE_API_BASE_URL=https://<服务器IP或域名>:8002/api/v1
 ```
 
 #### Step 3：绑定域名
@@ -314,7 +315,7 @@ server {
     server_name globaleads.devfoxai.cn;
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8001;
+        proxy_pass http://127.0.0.1:8002;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -379,3 +380,72 @@ docker-compose -f docker-compose.server.yml up -d --build
 ```
 
 前端回滚：Vercel 控制台 → Deployments → 选择历史版本 → Promote to Production
+
+---
+
+## 7. 自动监控告警
+
+### 7.1 监控脚本
+
+`deploy/monitor.sh` 每 5 分钟执行一次，检查以下内容：
+
+| 检查项 | 警告阈值 | 紧急阈值 |
+|--------|---------|---------|
+| 服务器内存使用率 | 85% | 92% |
+| 磁盘使用率 | 85% | 95% |
+| 容器运行状态 | 停止即告警 | — |
+| 容器健康检查 | unhealthy 即告警 | — |
+| 容器内存使用（占 limit） | 80% | — |
+| PostgreSQL 连通性 | 连接失败即告警 | — |
+| Redis 连通性 | 连接失败即告警 | — |
+
+告警通过**飞书群机器人 Webhook** 发送到群里。
+
+### 7.2 部署步骤
+
+#### Step 1：配置飞书 Webhook
+
+1. 在飞书群里添加「自定义机器人」
+2. 复制 Webhook 地址
+3. 在服务器上创建配置文件：
+
+```bash
+cp deploy/.env.example deploy/.env
+vim deploy/.env
+```
+
+填入 Webhook 地址：
+```env
+FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx
+```
+
+#### Step 2：手动测试
+
+```bash
+bash /home/admin/globaleads/deploy/monitor.sh
+```
+
+检查输出是否正常，飞书群是否收到告警消息。
+
+#### Step 3：配置 crontab
+
+```bash
+crontab -e
+```
+
+添加以下行（每 5 分钟执行一次）：
+```
+*/5 * * * * /home/admin/globaleads/deploy/monitor.sh >> /home/admin/globaleads/logs/monitor.log 2>&1
+```
+
+### 7.3 查看监控日志
+
+```bash
+# 实时查看监控日志
+tail -f /home/admin/globaleads/logs/monitor.log
+
+# 查看今天的告警
+grep "$(date +%Y-%m-%d)" /home/admin/globaleads/logs/monitor.log | grep -E "WARN|ERROR"
+```
+
+监控日志自动保留 7 天，超期自动清理。

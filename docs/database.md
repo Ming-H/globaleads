@@ -119,7 +119,7 @@ users
 | contact_email | VARCHAR(255) | NULL | 联系人邮箱 |
 | contact_phone | VARCHAR(50) | NULL | 联系人电话 |
 | email_verified | BOOLEAN | DEFAULT false | 邮箱是否已验证 |
-| data_source | VARCHAR(50) | NOT NULL | 数据来源：apollo/google_maps/hunter/snov |
+| data_source | VARCHAR(50) | NOT NULL | 数据来源：apollo/google_maps/hunter |
 | source_url | VARCHAR(500) | NULL | 来源页面 URL |
 | status | VARCHAR(20) | DEFAULT 'uncontacted' | uncontacted/contacted/replied/invalid |
 | created_at | TIMESTAMP | DEFAULT now() | 创建时间 |

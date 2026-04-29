@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, status, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from openpyxl import Workbook
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
@@ -139,7 +140,7 @@ async def export_b2b_leads(
     current_user: User = Depends(get_current_user),
 ):
     """
-    导出 B2B 线索为 CSV 文件
+    导出 B2B 线索为 CSV/Excel 文件
     """
     query = select(B2BLead).join(
         B2BTask, B2BLead.task_id == B2BTask.id
@@ -164,17 +165,16 @@ async def export_b2b_leads(
     result = await db.execute(query)
     leads = result.scalars().all()
 
-    # 生成 CSV
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow([
+    # 表头和数据行
+    headers = [
         "ID", "任务ID", "公司名称", "公司网站", "公司规模",
         "公司地址", "地区", "行业", "联系人", "职位",
         "邮箱", "电话", "邮箱已验证", "数据来源", "来源URL",
         "状态", "创建时间",
-    ])
+    ]
+    rows = []
     for lead in leads:
-        writer.writerow([
+        rows.append([
             lead.id,
             lead.task_id,
             lead.company_name,
@@ -194,13 +194,44 @@ async def export_b2b_leads(
             lead.created_at.isoformat() if lead.created_at else "",
         ])
 
-    output.seek(0)
-    filename = f"b2b_leads_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename_base = f"b2b_leads_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename={filename}",
-        },
-    )
+    # 根据格式导出
+    if request.format == "xlsx":
+        # 生成 Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "B2B线索"
+        ws.append(headers)
+        for row in rows:
+            ws.append(row)
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        filename = f"{filename_base}.xlsx"
+
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+    else:
+        # 生成 CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(headers)
+        writer.writerows(rows)
+
+        output.seek(0)
+        filename = f"{filename_base}.csv"
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )

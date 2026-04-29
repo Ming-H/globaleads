@@ -399,7 +399,7 @@ export default function SocialLeads() {
 
 | 变量 | 说明 | 示例 |
 |------|------|------|
-| `VITE_API_BASE_URL` | 后端 API 地址 | `http://localhost:8001/api/v1` |
+| `VITE_API_BASE_URL` | 后端 API 地址 | `http://localhost:8002/api/v1` |
 
 ---
 
@@ -413,7 +413,7 @@ cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --port 8001 --reload
+uvicorn app.main:app --port 8002 --reload
 
 # Celery Worker
 celery -A app.tasks.celery_app worker --loglevel=info --concurrency=1 -Q globaleads
