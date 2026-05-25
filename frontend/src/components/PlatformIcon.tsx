@@ -9,8 +9,8 @@ const platformConfig: Record<string, { color: string; icon: React.ReactNode; lab
   reddit: { color: '#FF4500', icon: <RedditOutlined />, label: 'Reddit' },
   bluesky: { color: '#0085FF', icon: <GlobalOutlined />, label: 'Bluesky' },
   youtube: { color: '#FF0000', icon: <YoutubeOutlined />, label: 'YouTube' },
-  apollo: { color: '#5B52E0', icon: <GlobalOutlined />, label: 'Apollo' },
-  google_maps: { color: '#34A853', icon: <GlobalOutlined />, label: 'Google Maps' },
+  google_search: { color: '#4285F4', icon: <GlobalOutlined />, label: 'Google Search' },
+  osm: { color: '#7EBC6F', icon: <GlobalOutlined />, label: 'OpenStreetMap' },
 };
 
 interface PlatformIconProps {

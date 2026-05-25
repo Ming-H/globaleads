@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Space, Tag, Select, Button, message, Popconfirm, Drawer, Descriptions, Typography } from 'antd';
+import { Space, Tag, Select, Button, message, Drawer, Descriptions, Typography, Divider } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
 import { ProTable } from '@ant-design/pro-components';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
 import { socialLeadService } from '../../services/socialLeadService';
@@ -253,6 +254,75 @@ export default function SocialLeads() {
                 <div style={{ marginBottom: 8, fontWeight: 'bold' }}>AI 分析：</div>
                 <Paragraph>{currentLead.ai_analysis}</Paragraph>
               </div>
+            )}
+
+            {/* 联系方式 */}
+            {(currentLead.contact_email || currentLead.contact_phone || currentLead.contact_website || currentLead.contact_social) && (
+              <>
+                <Divider orientation="left" style={{ margin: '8px 0' }}>联系方式</Divider>
+                <Descriptions column={1} bordered size="small">
+                  {currentLead.contact_email && (
+                    <Descriptions.Item label="邮箱">
+                      <Space>
+                        <a href={`mailto:${currentLead.contact_email}`}>{currentLead.contact_email}</a>
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => {
+                            navigator.clipboard.writeText(currentLead.contact_email!);
+                            message.success('已复制邮箱');
+                          }}
+                        />
+                      </Space>
+                    </Descriptions.Item>
+                  )}
+                  {currentLead.contact_phone && (
+                    <Descriptions.Item label="电话">
+                      <Space>
+                        <span>{currentLead.contact_phone}</span>
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => {
+                            navigator.clipboard.writeText(currentLead.contact_phone!);
+                            message.success('已复制电话');
+                          }}
+                        />
+                      </Space>
+                    </Descriptions.Item>
+                  )}
+                  {currentLead.contact_website && (
+                    <Descriptions.Item label="网站">
+                      <a href={currentLead.contact_website} target="_blank" rel="noreferrer">
+                        {currentLead.contact_website}
+                      </a>
+                    </Descriptions.Item>
+                  )}
+                  {currentLead.contact_social?.twitter && (
+                    <Descriptions.Item label="Twitter/X">
+                      <a href={`https://x.com/${currentLead.contact_social.twitter}`} target="_blank" rel="noreferrer">
+                        @{currentLead.contact_social.twitter}
+                      </a>
+                    </Descriptions.Item>
+                  )}
+                  {currentLead.contact_social?.linkedin && (
+                    <Descriptions.Item label="LinkedIn">
+                      <a href={currentLead.contact_social.linkedin} target="_blank" rel="noreferrer">
+                        查看LinkedIn
+                      </a>
+                    </Descriptions.Item>
+                  )}
+                  {currentLead.contact_social?.facebook && (
+                    <Descriptions.Item label="Facebook">
+                      <a href={currentLead.contact_social.facebook} target="_blank" rel="noreferrer">
+                        查看Facebook
+                      </a>
+                    </Descriptions.Item>
+                  )}
+                </Descriptions>
+              </>
             )}
 
             <div>

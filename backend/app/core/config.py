@@ -50,14 +50,9 @@ class Settings(BaseSettings):
     # YouTube API
     YOUTUBE_API_KEY: str = ""
 
-    # Apollo API
-    APOLLO_API_KEY: str = ""
-
-    # Google Maps API
-    GOOGLE_MAPS_API_KEY: str = ""
-
-    # Hunter.io API
-    HUNTER_API_KEY: str = ""
+    # Google Custom Search API（免费 100 次/天）
+    GOOGLE_SEARCH_API_KEY: str = ""
+    GOOGLE_SEARCH_CX: str = ""
 
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"

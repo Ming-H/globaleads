@@ -30,9 +30,8 @@ class APIUsageResponse(BaseModel):
     reddit: dict
     bluesky: dict
     youtube: dict
-    apollo: dict
-    google_maps: dict
-    hunter: dict
+    google_search: dict
+    osm: dict
 
 
 @router.get("/ai-config", response_model=AIConfigResponse)
@@ -89,9 +88,8 @@ async def get_api_usage(
         "reddit": {"limit": "60 requests/min", "monthly": None},
         "bluesky": {"limit": "3000 requests/5min", "monthly": None},
         "youtube": {"limit": "10000 units/day", "monthly": None},
-        "apollo": {"limit": "900 credits/month", "monthly": 900},
-        "google_maps": {"limit": "6250 requests/month", "monthly": 6250},
-        "hunter": {"limit": "25 credits/month", "monthly": 25},
+        "google_search": {"limit": "100 queries/day", "monthly": None},
+        "osm": {"limit": "1 request/sec", "monthly": None},
     }
 
     try:

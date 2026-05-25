@@ -41,10 +41,8 @@ const apiNameMap: Record<string, string> = {
   reddit: 'Reddit',
   bluesky: 'Bluesky',
   youtube: 'YouTube',
-  apollo: 'Apollo',
-  google_maps: 'Google Maps',
-  hunter: 'Hunter.io',
-  snov: 'Snov.io',
+  google_search: 'Google Search',
+  osm: 'OpenStreetMap',
 };
 
 export default function Settings() {

@@ -11,6 +11,14 @@ import ReactECharts from 'echarts-for-react';
 import { dashboardService } from '../../services/dashboardService';
 import type { DashboardStats, TrendData } from '../../types/dashboard';
 
+const nameMap: Record<string, string> = {
+  reddit: 'Reddit',
+  bluesky: 'Bluesky',
+  youtube: 'YouTube',
+  google_search: 'Google Search',
+  osm: 'OpenStreetMap',
+};
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [trends, setTrends] = useState<TrendData | null>(null);
@@ -91,7 +99,7 @@ export default function Dashboard() {
         itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
         label: { show: true, formatter: '{b}\n{d}%' },
         data: Object.entries(platformData).map(([name, value]) => ({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
+          name: nameMap[name] || name,
           value,
         })),
       },
@@ -224,7 +232,7 @@ export default function Dashboard() {
               <Col xs={24} sm={12} lg={6} key={name}>
                 <Card size="small">
                   <Statistic
-                    title={name.charAt(0).toUpperCase() + name.slice(1)}
+                    title={nameMap[name] || name}
                     value={info.used}
                     suffix={
                       typeof info.limit === 'number'

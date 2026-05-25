@@ -35,7 +35,7 @@ class B2BTask(Base, IntIDMixin, TimestampMixin):
     industry = Column(String(200), nullable=True)
     region = Column(String(200), nullable=True)
     company_size = Column(String(50), nullable=True)
-    data_sources = Column(JSONB, nullable=False)
+    data_sources = Column(JSONB, nullable=False, default=["google_search", "osm"])
     max_results = Column(Integer, default=100)
     status = Column(String(20), default="pending", nullable=False, index=True)
     error_message = Column(Text, nullable=True)

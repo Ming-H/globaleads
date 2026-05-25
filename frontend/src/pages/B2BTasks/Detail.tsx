@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, message, Popconfirm, Space, Tag, Descriptions, Card } from 'antd';
-import { ArrowLeftOutlined, StopOutlined, ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, StopOutlined, ReloadOutlined } from '@ant-design/icons';
 import { ProTable } from '@ant-design/pro-components';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
 import { b2bTaskService } from '../../services/b2bTaskService';
@@ -104,14 +104,7 @@ export default function B2BTaskDetail() {
       search: false,
       render: (_, record) =>
         record.contact_email ? (
-          <Space>
-            <span>{record.contact_email}</span>
-            {record.email_verified ? (
-              <CheckCircleOutlined style={{ color: '#52c41a' }} />
-            ) : (
-              <CloseCircleOutlined style={{ color: '#999' }} />
-            )}
-          </Space>
+          <a href={`mailto:${record.contact_email}`}>{record.contact_email}</a>
         ) : (
           <Tag>无邮箱</Tag>
         ),

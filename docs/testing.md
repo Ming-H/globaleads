@@ -127,20 +127,20 @@ OLLAMA_MODEL=qwen3:0.6b
 | BS-01 | 关键词搜索帖子 | 返回帖子列表 |
 | BS-02 | 获取帖子作者信息 | 返回作者资料 |
 
-### 3.3 Apollo API
+### 3.3 Google Custom Search API
 
 | ID | 用例 | 预期结果 |
 |----|------|---------|
-| AP-01 | 按行业搜索公司 | 返回公司列表 |
-| AP-02 | 获取联系人邮箱 | 返回邮箱 |
-| AP-03 | 额度用尽 | 返回 quota_exceeded |
+| GS-01 | 按行业+地区搜索公司 | 返回公司列表 |
+| GS-02 | 搜索结果包含公司网站 | 返回网站 URL |
+| GS-03 | 日配额用尽 | 返回 quota_exceeded |
 
-### 3.4 Google Maps API
+### 3.4 OpenStreetMap API
 
 | ID | 用例 | 预期结果 |
 |----|------|---------|
-| GM-01 | 按行业+地区搜索商家 | 返回商家列表 |
-| GM-02 | 获取商家详情 | 返回名称、地址、电话、网站 |
+| OS-01 | 按行业+地区搜索商家 | 返回商家列表 |
+| OS-02 | 获取商家详情 | 返回名称、地址、电话、网站 |
 
 ---
 
@@ -201,8 +201,8 @@ pytest -k "ai_"
 
 - 测试用户：`testuser` / `testpass123`
 - Reddit API 测试用关键词：`"LED lighting"`（保证有搜索结果）
-- Apollo 测试用行业：`"Lighting"`
-- Google Maps 测试用地区：`"New York"`
+- Google Custom Search 测试用行业：`"Lighting"`
+- OpenStreetMap 测试用地区：`"New York"`
 
 ---
 

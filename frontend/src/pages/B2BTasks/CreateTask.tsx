@@ -35,8 +35,8 @@ const regionOptions = [
 ];
 
 const dataSourceOptions = [
-  { label: 'Apollo', value: 'apollo' },
-  { label: 'Google Maps', value: 'google_maps' },
+  { label: 'Google Search', value: 'google_search' },
+  { label: 'OpenStreetMap', value: 'osm' },
 ];
 
 const companySizeOptions = [
@@ -89,7 +89,7 @@ export default function CreateB2BTask() {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            data_sources: ['apollo'],
+            data_sources: ['google_search', 'osm'],
             max_results: 100,
           }}
         >

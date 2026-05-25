@@ -12,7 +12,10 @@ export interface B2BLead {
   contact_name: string;
   contact_title: string;
   contact_email: string;
-  email_verified: boolean;
+  contact_phone: string;
+  contact_twitter: string;
+  contact_linkedin: string;
+  contact_facebook: string;
   data_source: string;
   status: B2BLeadStatus;
   created_at: string;

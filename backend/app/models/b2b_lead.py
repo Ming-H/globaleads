@@ -24,8 +24,10 @@ class B2BLead(Base, IntIDMixin):
         contact_title: 联系人职位
         contact_email: 联系人邮箱
         contact_phone: 联系人电话
-        email_verified: 邮箱是否已验证
-        data_source: 数据来源 (apollo/google_maps/hunter)
+        contact_twitter: Twitter/X 账号
+        contact_linkedin: LinkedIn 链接
+        contact_facebook: Facebook 页面
+        data_source: 数据来源 (google_search/osm)
         source_url: 来源页面 URL
         status: 联系状态 (uncontacted/contacted/replied/invalid)
         created_at: 创建时间
@@ -43,7 +45,9 @@ class B2BLead(Base, IntIDMixin):
     contact_title = Column(String(200), nullable=True)
     contact_email = Column(String(255), nullable=True, index=True)
     contact_phone = Column(String(50), nullable=True)
-    email_verified = Column(Boolean, default=False)
+    contact_twitter = Column(String(200), nullable=True)
+    contact_linkedin = Column(String(500), nullable=True)
+    contact_facebook = Column(String(500), nullable=True)
     data_source = Column(String(50), nullable=False, index=True)
     source_url = Column(String(500), nullable=True)
     status = Column(String(20), default="uncontacted", nullable=False, index=True)

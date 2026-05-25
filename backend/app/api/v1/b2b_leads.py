@@ -169,7 +169,8 @@ async def export_b2b_leads(
     headers = [
         "ID", "任务ID", "公司名称", "公司网站", "公司规模",
         "公司地址", "地区", "行业", "联系人", "职位",
-        "邮箱", "电话", "邮箱已验证", "数据来源", "来源URL",
+        "邮箱", "电话", "Twitter", "LinkedIn", "Facebook",
+        "数据来源", "来源URL",
         "状态", "创建时间",
     ]
     rows = []
@@ -187,7 +188,9 @@ async def export_b2b_leads(
             lead.contact_title or "",
             lead.contact_email or "",
             lead.contact_phone or "",
-            lead.email_verified,
+            lead.contact_twitter or "",
+            lead.contact_linkedin or "",
+            lead.contact_facebook or "",
             lead.data_source,
             lead.source_url or "",
             lead.status,

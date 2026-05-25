@@ -92,14 +92,14 @@ async def test_list_b2b_leads_filter_by_data_source(
 ):
     """Test listing B2B leads filtered by data source."""
     response = await test_client.get(
-        "/api/v1/b2b-leads?data_source=apollo",
+        "/api/v1/b2b-leads?data_source=google_search",
         headers=auth_headers,
     )
 
     assert response.status_code == 200
     data = response.json()
     for lead in data["items"]:
-        assert lead["data_source"] == "apollo"
+        assert lead["data_source"] == "google_search"
 
 
 @pytest.mark.asyncio
@@ -117,14 +117,14 @@ async def test_list_b2b_leads_filter_by_has_email(
         task_id=test_b2b_task.id,
         company_name="Company A",
         contact_email="contact@companya.com",
-        data_source="apollo",
+        data_source="google_search",
         status="uncontacted",
     )
     lead_without_email = B2BLead(
         task_id=test_b2b_task.id,
         company_name="Company B",
         contact_email=None,
-        data_source="google_maps",
+        data_source="osm",
         status="uncontacted",
     )
     test_session.add(lead_with_email)
@@ -159,7 +159,7 @@ async def test_list_b2b_leads_filter_by_status(
             task_id=test_b2b_task.id,
             company_name=f"Company {status}",
             contact_email=f"{status}@company.com",
-            data_source="apollo",
+            data_source="google_search",
             status=status,
         )
         test_session.add(lead)
@@ -210,7 +210,7 @@ async def test_list_b2b_leads_with_pagination(
             task_id=test_b2b_task.id,
             company_name=f"Company {i}",
             contact_email=f"contact{i}@company.com",
-            data_source="apollo",
+            data_source="google_search",
             status="uncontacted",
         )
         test_session.add(lead)
@@ -375,7 +375,7 @@ async def test_export_b2b_leads_with_filters(
             company_name=f"{industry} Company",
             contact_email=f"contact@{industry.lower()}.com",
             industry=industry,
-            data_source="apollo",
+            data_source="google_search",
             status="uncontacted",
         )
         test_session.add(lead)

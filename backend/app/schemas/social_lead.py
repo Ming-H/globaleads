@@ -20,6 +20,10 @@ class SocialLeadResponse(BaseModel):
     ai_score: int
     ai_tags: list[str] = []
     ai_analysis: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_website: Optional[str] = None
+    contact_social: Optional[dict] = None
     status: str
     created_at: datetime
 

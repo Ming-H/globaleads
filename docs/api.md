@@ -230,7 +230,7 @@
       "industry": "Lighting",
       "region": "United States",
       "company_size": "11-50",
-      "data_sources": ["apollo", "google_maps"],
+      "data_sources": ["google_search", "osm"],
       "status": "completed",
       "lead_count": 45,
       "created_at": "2026-04-25T10:00:00Z"
@@ -250,7 +250,7 @@
   "industry": "Lighting",
   "region": "United States",
   "company_size": "11-50",
-  "data_sources": ["apollo", "google_maps"],
+  "data_sources": ["google_search", "osm"],
   "max_results": 100
 }
 ```
@@ -283,7 +283,7 @@
 | task_id | int | 按任务筛选 |
 | industry | string | 按行业筛选 |
 | region | string | 按地区筛选 |
-| data_source | string | 按数据源筛选：apollo/google_maps |
+| data_source | string | 按数据源筛选：google_search/osm |
 | has_email | bool | 是否有邮箱 |
 | status_filter | string | 联系状态 |
 
@@ -305,9 +305,11 @@
       "contact_title": "Purchasing Manager",
       "contact_email": "sarah@brightled.com",
       "contact_phone": "+1-555-0123",
-      "email_verified": true,
-      "data_source": "apollo",
-      "source_url": "https://apollo.io/...",
+      "contact_twitter": "https://twitter.com/brightled",
+      "contact_linkedin": "https://linkedin.com/company/brightled",
+      "contact_facebook": "https://facebook.com/brightled",
+      "data_source": "google_search",
+      "source_url": "https://brightled.com",
       "status": "uncontacted",
       "created_at": "2026-04-25T10:03:00Z"
     }
@@ -317,7 +319,10 @@
 
 **字段说明：**
 - `contact_phone`: 联系人电话（可选）
-- `source_url`: 来源页面 URL（Apollo/GMaps 原始链接）
+- `contact_twitter`: 公司 Twitter 主页 URL（可选）
+- `contact_linkedin`: 公司 LinkedIn 主页 URL（可选）
+- `contact_facebook`: 公司 Facebook 主页 URL（可选）
+- `source_url`: 来源页面 URL（公司网站或搜索结果链接）
 
 ### GET /b2b-leads/{lead_id}
 
@@ -362,8 +367,8 @@
     "total": 200,
     "this_week": 50,
     "by_source": {
-      "apollo": 150,
-      "google_maps": 50
+      "google_search": 150,
+      "osm": 50
     },
     "with_email": 180,
     "by_industry": {
@@ -381,9 +386,8 @@
     "reddit": { "used": 1200, "limit": "60/min" },
     "bluesky": { "used": 800, "limit": "3000/5min" },
     "youtube": { "used": 500, "limit": 10000 },
-    "apollo": { "used": 200, "limit": 900 },
-    "google_maps": { "used": 500, "limit": 6250 },
-    "hunter": { "used": 10, "limit": 25 }
+    "google_search": { "used": 80, "limit": 100 },
+    "osm": { "used": 500, "limit": "∞" }
   }
 }
 ```
@@ -412,9 +416,8 @@
   "reddit": { "used": 1200, "limit": "60/min", "remaining": null },
   "bluesky": { "used": 800, "limit": "3000/5min", "remaining": null },
   "youtube": { "used": 500, "limit": 10000, "remaining": 9500 },
-  "apollo": { "used": 200, "limit": 900, "remaining": 700 },
-  "google_maps": { "used": 500, "limit": 6250, "remaining": 5750 },
-  "hunter": { "used": 10, "limit": 25, "remaining": 15 }
+  "google_search": { "used": 80, "limit": 100, "remaining": 20 },
+  "osm": { "used": 500, "limit": "∞", "remaining": null }
 }
 ```
 

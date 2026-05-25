@@ -3,17 +3,16 @@ B2B 搜索 Celery 异步任务
 
 流程：
 1. 获取任务配置
-2. 调用 Apollo / Google Maps API 搜索公司
-3. 获取公司列表 + 联系人
-4. 调用 Hunter.io 获取邮箱
-5. 邮箱验证
+2. Google Custom Search 搜索公司网站
+3. OpenStreetMap Nominatim 搜索本地商家
+4. 合并去重结果
+5. 对每个公司网站抓取联系方式
 6. 写入 b2b_leads 表
 7. 更新任务状态
 """
 import logging
 import traceback
 from datetime import datetime
-from urllib.parse import urlparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -22,7 +21,6 @@ from app.tasks.celery_app import celery_app
 from app.core.config import settings
 from app.core.logging_config import setup_logging, get_task_logger
 
-# Celery Worker 启动时初始化日志
 setup_logging()
 logger = get_task_logger("b2b_search")
 
@@ -54,26 +52,25 @@ def search_b2b_companies(self, task_id: int):
             logger.error(f"任务不存在: {task_id}")
             return
 
-        # 更新状态为 running
         task.status = "running"
         task.updated_at = datetime.utcnow()
         db.commit()
 
         data_sources = task.data_sources or []
-        industry = task.industry
-        region = task.region
+        industry = task.industry or "business"
+        region = task.region or ""
         company_size = task.company_size
         max_results = task.max_results or 100
 
         all_companies = []
 
-        # 2. 调用各数据源 API 搜索公司
+        # 2. 调用各免费数据源搜索公司
         for source in data_sources:
             try:
-                if source == "apollo":
-                    companies = _search_apollo(industry, region, company_size, max_results)
-                elif source == "google_maps":
-                    companies = _search_google_maps(industry, region, max_results)
+                if source == "google_search":
+                    companies = _search_google(industry, region, max_results)
+                elif source == "osm":
+                    companies = _search_osm(industry, region, max_results)
                 else:
                     logger.warning(f"不支持的数据源: {source}")
                     continue
@@ -93,89 +90,82 @@ def search_b2b_companies(self, task_id: int):
             db.commit()
             return
 
-        # 3. 获取联系人邮箱
-        from app.services.hunter_service import HunterSyncService
-        hunter = HunterSyncService()
+        # 3. 对每个公司提取联系方式
+        from app.services.contact_extractor import extract_contacts_from_website
 
         lead_count = 0
+        seen_names = set()
+
         for company in all_companies[:max_results]:
             try:
-                # 尝试获取邮箱
-                contact_email = None
-                contact_name = None
-                contact_title = None
-                email_verified = False
-
-                # 优先从 Apollo 直接获取联系人
-                if company.get("data_source") == "apollo" and company.get("id"):
-                    try:
-                        from app.services.apollo_service import ApolloSyncService
-                        apollo = ApolloSyncService()
-                        contacts = apollo.get_contact_email(company["id"])
-                        if contacts:
-                            contact = contacts[0]
-                            contact_email = contact.get("email")
-                            contact_name = contact.get("name")
-                            contact_title = contact.get("title")
-                            email_verified = contact.get("email_status") == "verified"
-                    except Exception:
-                        pass
-
-                # 如果没有邮箱，用 Hunter 查找
-                if not contact_email and company.get("website"):
-                    domain = _extract_domain(company.get("website", ""))
-                    if domain:
-                        try:
-                            emails = hunter.domain_search(domain, limit=3)
-                            if emails:
-                                contact_email = emails[0].get("email")
-                                contact_name = emails[0].get("full_name")
-                                contact_title = emails[0].get("position")
-                                email_verified = emails[0].get("verified", False)
-                        except Exception:
-                            pass
+                company_name = company.get("company_name") or company.get("name", "")
+                if not company_name or company_name in seen_names:
+                    continue
 
                 # 去重检查：同任务同公司名
                 existing = db.query(B2BLead).filter(
                     B2BLead.task_id == task_id,
-                    B2BLead.company_name == company.get("company_name", ""),
+                    B2BLead.company_name == company_name,
                 ).first()
-
                 if existing:
                     continue
 
-                # 5. 写入 b2b_leads 表
+                seen_names.add(company_name)
+
+                # 提取联系方式
+                contact_email = company.get("email")
+                contact_phone = company.get("phone")
+                contact_twitter = None
+                contact_linkedin = None
+                contact_facebook = None
+                website = company.get("website") or company.get("url")
+
+                # 如果有网站，尝试抓取联系方式
+                if website:
+                    try:
+                        web_contacts = extract_contacts_from_website(website)
+                        if not contact_email and web_contacts["emails"]:
+                            contact_email = web_contacts["emails"][0]
+                        if not contact_phone and web_contacts["phones"]:
+                            contact_phone = web_contacts["phones"][0]
+                        if web_contacts["twitter"]:
+                            contact_twitter = web_contacts["twitter"][0]
+                        if web_contacts["linkedin"]:
+                            contact_linkedin = web_contacts["linkedin"][0]
+                        if web_contacts["facebook"]:
+                            contact_facebook = web_contacts["facebook"][0]
+                    except Exception as e:
+                        logger.warning(f"抓取网站联系方式失败: {website}, {e}")
+
                 lead = B2BLead(
                     task_id=task_id,
-                    company_name=company.get("company_name", ""),
-                    company_website=company.get("website"),
-                    company_size=str(company.get("company_size", "")) if company.get("company_size") else company_size,
-                    company_address=company.get("company_address") or company.get("address"),
+                    company_name=company_name,
+                    company_website=website,
+                    company_size=company_size,
+                    company_address=company.get("address") or company.get("company_address"),
                     region=company.get("region") or region,
                     industry=company.get("industry") or industry,
-                    contact_name=contact_name,
-                    contact_title=contact_title,
                     contact_email=contact_email,
-                    contact_phone=company.get("phone"),
-                    email_verified=email_verified,
+                    contact_phone=contact_phone,
+                    contact_twitter=contact_twitter,
+                    contact_linkedin=contact_linkedin,
+                    contact_facebook=contact_facebook,
                     data_source=company.get("data_source", ""),
-                    source_url=company.get("linkedin_url") or company.get("url"),
+                    source_url=website,
                     status="uncontacted",
                 )
                 db.add(lead)
                 lead_count += 1
 
             except Exception as e:
-                logger.error(f"处理公司 {company.get('company_name', '')} 失败: {e}")
+                logger.error(f"处理公司 {company.get('company_name') or company.get('name', '')} 失败: {e}")
                 continue
 
-        # 6. 更新任务状态
         task.status = "completed"
         task.lead_count = lead_count
         task.updated_at = datetime.utcnow()
         db.commit()
 
-        # 更新 API 用量统计
         _update_api_usage(data_sources)
 
         logger.info(f"B2B 任务 {task_id} 完成，发现 {lead_count} 条线索")
@@ -201,83 +191,56 @@ def search_b2b_companies(self, task_id: int):
         engine.dispose()
 
 
-def _search_apollo(
-    industry: str | None,
-    region: str | None,
-    company_size: str | None,
-    max_results: int,
-) -> list[dict]:
-    """通过 Apollo API 搜索公司"""
-    from app.services.apollo_service import ApolloSyncService
+def _search_google(industry: str, region: str, max_results: int) -> list[dict]:
+    """通过 Google Custom Search 搜索公司"""
+    from app.services.google_search_service import GoogleSearchSyncService
 
-    apollo = ApolloSyncService()
-    all_companies = []
-    page = 1
+    service = GoogleSearchSyncService()
+    query = f"{industry} companies"
+    if region:
+        query += f" in {region}"
 
-    while len(all_companies) < max_results:
-        result = apollo.search_companies(
-            industry=industry,
-            region=region,
-            company_size=company_size,
-            page=page,
-            per_page=min(25, max_results - len(all_companies)),
-        )
+    try:
+        results = service.search_companies(query, max_results=min(10, max_results))
+    except RuntimeError as e:
+        logger.warning(f"Google Search 配额已满: {e}")
+        return []
 
-        companies = result.get("companies", [])
-        if not companies:
-            break
-
-        all_companies.extend(companies)
-        page += 1
-
-        if result.get("total", 0) <= page * 25:
-            break
-
-    return all_companies[:max_results]
-
-
-def _search_google_maps(
-    industry: str | None,
-    region: str | None,
-    max_results: int,
-) -> list[dict]:
-    """通过 Google Maps API 搜索公司"""
-    from app.services.google_maps_service import GoogleMapsSyncService
-
-    gmaps = GoogleMapsSyncService()
-    query = f"{industry or 'business'} in {region or 'United States'}"
-    places = gmaps.search_places(query)
-
-    # 获取详细信息（含电话和网站）
     companies = []
-    for place in places[:max_results]:
-        if place.get("place_id"):
-            try:
-                details = gmaps.get_place_details(place["place_id"])
-                companies.append({
-                    **place,
-                    "website": details.get("website"),
-                    "phone": details.get("phone"),
-                })
-            except Exception:
-                companies.append(place)
-        else:
-            companies.append(place)
+    for r in results:
+        companies.append({
+            "company_name": r.get("title", "").split(" - ")[0].split(" | ")[0],
+            "website": r.get("url", ""),
+            "snippet": r.get("snippet", ""),
+        })
 
     return companies
 
 
-def _extract_domain(url: str) -> str | None:
-    """从 URL 中提取域名"""
-    if not url:
-        return None
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
+def _search_osm(industry: str, region: str, max_results: int) -> list[dict]:
+    """通过 OpenStreetMap Nominatim 搜索本地商家"""
+    from app.services.osm_service import OSMSyncService
+
+    service = OSMSyncService()
+    query = f"{industry}"
     try:
-        parsed = urlparse(url)
-        return parsed.netloc.replace("www.", "")
-    except Exception:
-        return None
+        results = service.search_businesses(query, region=region, limit=min(20, max_results))
+    except Exception as e:
+        logger.warning(f"OSM 搜索失败: {e}")
+        return []
+
+    companies = []
+    for r in results:
+        companies.append({
+            "company_name": r.get("name", ""),
+            "address": r.get("address", ""),
+            "phone": r.get("phone", ""),
+            "email": r.get("email", ""),
+            "website": r.get("website", ""),
+            "display_name": r.get("display_name", ""),
+        })
+
+    return companies
 
 
 def _update_api_usage(data_sources: list[str]):
@@ -288,7 +251,6 @@ def _update_api_usage(data_sources: list[str]):
         for source in data_sources:
             key = f"api_usage:{source}"
             r.incr(key)
-        # 也增加 hunter 用量（如果使用了的话）
         r.close()
     except Exception:
         pass

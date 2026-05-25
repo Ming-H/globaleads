@@ -27,7 +27,7 @@ async def test_create_b2b_task_success(
             "industry": "Technology",
             "region": "United States",
             "company_size": "11-50",
-            "data_sources": ["apollo"],
+            "data_sources": ["google_search", "osm"],
             "max_results": 100,
         },
         headers=auth_headers,
@@ -39,7 +39,7 @@ async def test_create_b2b_task_success(
     assert data["industry"] == "Technology"
     assert data["region"] == "United States"
     assert data["company_size"] == "11-50"
-    assert data["data_sources"] == ["apollo"]
+    assert data["data_sources"] == ["google_search", "osm"]
     assert data["max_results"] == 100
     assert data["status"] == "running"
     assert data["lead_count"] == 0
@@ -59,7 +59,7 @@ async def test_create_b2b_task_minimal_data(
         "/api/v1/b2b-tasks",
         json={
             "name": "Minimal Task",
-            "data_sources": ["google_maps"],
+            "data_sources": ["osm"],
         },
         headers=auth_headers,
     )
@@ -67,7 +67,7 @@ async def test_create_b2b_task_minimal_data(
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "Minimal Task"
-    assert data["data_sources"] == ["google_maps"]
+    assert data["data_sources"] == ["osm"]
 
 
 @pytest.mark.asyncio
@@ -119,14 +119,14 @@ async def test_create_b2b_task_multiple_sources(
             "name": "Multi Source Task",
             "industry": "Manufacturing",
             "region": "Europe",
-            "data_sources": ["apollo", "google_maps"],
+            "data_sources": ["google_search", "osm"],
         },
         headers=auth_headers,
     )
 
     assert response.status_code == 201
     data = response.json()
-    assert set(data["data_sources"]) == {"apollo", "google_maps"}
+    assert set(data["data_sources"]) == {"google_search", "osm"}
 
 
 @pytest.mark.asyncio
@@ -181,7 +181,7 @@ async def test_list_b2b_tasks_with_status_filter(
         task = B2BTask(
             user_id=test_user.id,
             name=f"{status.title()} Task",
-            data_sources=["apollo"],
+            data_sources=["google_search", "osm"],
             status=status,
             lead_count=0,
         )
@@ -214,7 +214,7 @@ async def test_list_b2b_tasks_with_pagination(
         task = B2BTask(
             user_id=test_user.id,
             name=f"Task {i}",
-            data_sources=["apollo"],
+            data_sources=["google_search", "osm"],
             status="pending",
             lead_count=0,
         )
@@ -311,7 +311,7 @@ async def test_stop_b2b_task_success(
     task = B2BTask(
         user_id=test_user.id,
         name="Running Task",
-        data_sources=["apollo"],
+        data_sources=["google_search", "osm"],
         status="running",
         celery_task_id="celery-task-123",
         lead_count=0,
@@ -360,7 +360,7 @@ async def test_retry_b2b_task_success(
     task = B2BTask(
         user_id=test_user.id,
         name="Failed Task",
-        data_sources=["apollo"],
+        data_sources=["google_search", "osm"],
         status="failed",
         error_message="API rate limit exceeded",
         lead_count=0,
@@ -394,7 +394,7 @@ async def test_retry_b2b_task_quota_exceeded(
     task = B2BTask(
         user_id=test_user.id,
         name="Quota Exceeded Task",
-        data_sources=["apollo"],
+        data_sources=["google_search", "osm"],
         status="quota_exceeded",
         error_message="API quota exceeded",
         lead_count=0,

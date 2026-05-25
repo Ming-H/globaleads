@@ -4,7 +4,10 @@ B2B 任务相关请求/响应模型
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+VALID_DATA_SOURCES = {"google_search", "osm"}
 
 
 class B2BTaskCreate(BaseModel):
@@ -15,6 +18,14 @@ class B2BTaskCreate(BaseModel):
     company_size: Optional[str] = Field(None, max_length=50, description="公司规模范围")
     data_sources: list[str] = Field(..., min_length=1, description="数据源列表")
     max_results: int = Field(default=100, ge=1, le=1000, description="最大搜索数量")
+
+    @field_validator("data_sources")
+    @classmethod
+    def validate_data_sources(cls, v: list[str]) -> list[str]:
+        invalid = set(v) - VALID_DATA_SOURCES
+        if invalid:
+            raise ValueError(f"不支持的数据源: {invalid}，可选值: {VALID_DATA_SOURCES}")
+        return v
 
 
 class B2BTaskResponse(BaseModel):

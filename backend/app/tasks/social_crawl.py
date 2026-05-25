@@ -111,7 +111,31 @@ def crawl_social_media(self, task_id: int):
                 if not ai_result.get("has_intent") or ai_result.get("score", 0) < min_score:
                     continue
 
-                # 5. 写入 social_leads 表
+                # 5. 提取联系方式（合并正则 + AI 提取结果）
+                from app.services.contact_extractor import extract_contacts_from_text
+                regex_contacts = extract_contacts_from_text(content)
+
+                ai_contacts = ai_result.get("contacts", {})
+                contact_email = ai_contacts.get("email") or (
+                    regex_contacts["emails"][0] if regex_contacts["emails"] else None
+                )
+                contact_phone = ai_contacts.get("phone") or (
+                    regex_contacts["phones"][0] if regex_contacts["phones"] else None
+                )
+                contact_website = ai_contacts.get("website") or (
+                    regex_contacts["websites"][0] if regex_contacts["websites"] else None
+                )
+                contact_social = {}
+                if ai_contacts.get("twitter") or regex_contacts["twitter"]:
+                    contact_social["twitter"] = ai_contacts.get("twitter") or regex_contacts["twitter"][0]
+                if ai_contacts.get("linkedin") or regex_contacts["linkedin"]:
+                    contact_social["linkedin"] = ai_contacts.get("linkedin") or regex_contacts["linkedin"][0]
+                if regex_contacts["facebook"]:
+                    contact_social["facebook"] = regex_contacts["facebook"][0]
+                if not contact_social:
+                    contact_social = None
+
+                # 6. 写入 social_leads 表
                 # 去重检查：同平台同作者同内容
                 existing = db.query(SocialLead).filter(
                     SocialLead.task_id == task_id,
@@ -135,6 +159,10 @@ def crawl_social_media(self, task_id: int):
                     ai_score=ai_result.get("score", 0),
                     ai_tags=ai_result.get("tags", []),
                     ai_analysis=ai_result.get("analysis", ""),
+                    contact_email=contact_email,
+                    contact_phone=contact_phone,
+                    contact_website=contact_website,
+                    contact_social=contact_social,
                     status="uncontacted",
                 )
                 db.add(lead)

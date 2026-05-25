@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GlobalLeads is a B2B/social lead mining platform for Chinese foreign trade companies. It crawls overseas social media (Reddit, Bluesky, YouTube) and B2B sources (Apollo, Google Maps, Hunter.io), then uses LLM-based AI to analyze purchase intent and score leads.
+GlobalLeads is a B2B/social lead mining platform for Chinese foreign trade companies. It crawls overseas social media (Reddit, Bluesky, YouTube) and B2B sources (Google Custom Search, OpenStreetMap), then uses LLM-based AI to analyze purchase intent and score leads. Contact info (email, phone, social profiles) is extracted automatically from websites via contact_extractor.
 
 ## Development Commands
 
@@ -49,7 +49,7 @@ docker compose -f docker-compose.server.yml up -d --build
 - **`models/`** — SQLAlchemy 2.0 async ORM models (user, social_task, social_lead, b2b_task, b2b_lead)
 - **`schemas/`** — Pydantic v2 request/response schemas
 - **`api/v1/`** — Route handlers, all prefixed `/api/v1`
-- **`services/`** — Business logic: platform API wrappers (reddit, bluesky, youtube, apollo, google_maps, hunter) and AI service
+- **`services/`** — Business logic: platform API wrappers (reddit, bluesky, youtube, google_search, osm) and contact_extractor, plus AI service
 - **`tasks/`** — Celery async tasks (`social_crawl`, `b2b_search`) with `celery_app.py` configuration; tasks are explicitly imported to ensure registration
 - **`middleware/`** — Request logging middleware with request_id tracing
 
@@ -64,11 +64,13 @@ docker compose -f docker-compose.server.yml up -d --build
 1. User creates task via API → saved to DB with `pending` status
 2. Celery worker picks up task from `globaleads` queue
 3. Service layer calls third-party APIs to collect data
-4. AI service (Ollama/DeepSeek) analyzes collected content for purchase intent
-5. Scored leads written to DB, task status updated to `completed`
+4. Contact extractor scrapes websites for email, phone, and social profile links
+5. AI service (Ollama/DeepSeek) analyzes collected content for purchase intent and extracts contact info
+6. Scored leads written to DB, task status updated to `completed`
 
 ### Key Design Decisions
-- **AI provider switching**: `AI_PROVIDER` env var (`ollama` or `deepseek`), both use OpenAI-compatible API format
+- **Free API stack**: B2B search uses Google Custom Search (free, 100 queries/day) and OpenStreetMap Nominatim (free, unlimited) instead of paid Apollo/Google Maps APIs. Contact extraction uses a custom scraper (contact_extractor.py) instead of paid Hunter.io.
+- **AI provider switching**: `AI_PROVIDER` env var (`ollama` or `deepseek`), both use OpenAI-compatible API format. AI also extracts contact info (email, phone, social profiles) from crawled content.
 - **Shared infrastructure**: PostgreSQL uses DB name `globaleads` (vs `leadmine`), Redis uses DB 1 (vs DB 0), Celery uses queue name `globaleads`
 - **Async throughout**: All DB operations use SQLAlchemy async sessions via `asyncpg`; all external API calls use `httpx` async
 - **Logging**: Three rotating log files (`app.log`, `error.log`, `task.log`) with `request_id`/`task_id` tracing. Use `get_task_logger()` for Celery tasks, `get_service_logger()` for external service calls

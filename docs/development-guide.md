@@ -391,9 +391,8 @@ export default function SocialLeads() {
 | `REDDIT_CLIENT_ID` | Reddit 客户端 ID | - |
 | `REDDIT_CLIENT_SECRET` | Reddit 客户端密钥 | - |
 | `YOUTUBE_API_KEY` | YouTube API Key | - |
-| `APOLLO_API_KEY` | Apollo API Key | - |
-| `GOOGLE_MAPS_API_KEY` | Google Maps Key | - |
-| `HUNTER_API_KEY` | Hunter.io Key | - |
+| `GOOGLE_SEARCH_API_KEY` | Google Custom Search API Key | - |
+| `GOOGLE_SEARCH_CX` | Google Custom Search Engine ID | - |
 
 ### 5.2 前端环境变量
 

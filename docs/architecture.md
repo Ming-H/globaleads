@@ -38,8 +38,9 @@
 │                      ├──→ Reddit API                         │
 │                      ├──→ Bluesky API                        │
 │                      ├──→ YouTube API                        │
-│                      ├──→ Apollo.io API                      │
-│                      ├──→ Google Maps API                    │
+│                      ├──→ Google Custom Search API           │
+│                      ├──→ OpenStreetMap API                  │
+│                      ├──→ Contact Extractor (web scraping)   │
 │                      └──→ Ollama / DeepSeek API              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -124,9 +125,9 @@ backend/
 │   │   ├── reddit_service.py    # Reddit API 封装
 │   │   ├── bluesky_service.py   # Bluesky API 封装
 │   │   ├── youtube_service.py   # YouTube API 封装
-│   │   ├── apollo_service.py    # Apollo API 封装
-│   │   ├── google_maps_service.py
-│   │   ├── hunter_service.py    # Hunter.io API 封装
+│   │   ├── google_search_service.py  # Google Custom Search API 封装
+│   │   ├── osm_service.py            # OpenStreetMap Nominatim API 封装
+│   │   ├── contact_extractor.py      # 从公司网站提取联系方式（web scraping）
 │   │   └── ai_service.py        # LLM 分析（Ollama/DeepSeek）
 │   ├── tasks/                   # Celery 异步任务
 │   │   ├── social_crawl.py      # 社媒爬取任务
@@ -216,16 +217,13 @@ frontend/
   Celery Worker 取任务
         │
         ▼
-  调用 Apollo / Google Maps API 搜索公司
+  调用 Google Custom Search / OpenStreetMap API 搜索公司
         │
         ▼
   获取公司列表 + 联系人
         │
         ▼
-  调用 Hunter.io 获取邮箱
-        │
-        ▼
-  邮箱验证（API 验证）
+  从公司网站提取联系方式（contact_extractor）
         │
         ▼
   写入 b2b_leads 表
@@ -262,15 +260,13 @@ elif AI_PROVIDER == "deepseek":
 
 系统需跟踪各第三方 API 的使用量，避免超额：
 
-| API | 月额度 | 系统跟踪 |
-|-----|--------|---------|
+| API | 额度 | 系统跟踪 |
+|-----|------|---------|
 | Reddit | 60 请求/分钟（限速） | 请求限速器 |
 | Bluesky | 3000 请求/5 分钟（限速） | 请求限速器 |
 | YouTube | 10,000 配额单位/天 | 每日配额计数 |
-| Apollo | 900 积分/月 | 月度积分计数 |
-| Google Maps | 6,250 次/月 | 月度请求计数 |
-| Hunter.io | 25 积分/月 | 月度积分计数 |
-| Hunter.io | 25 积分/月 | 月度积分计数 |
+| Google Custom Search | 100 queries/day | 每日配额计数 |
+| OpenStreetMap | 1 req/sec | 请求限速器 |
 
 额度不足时任务标记为 `quota_exceeded`，提示用户。
 

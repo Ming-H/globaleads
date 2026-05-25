@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://globaleads-api.devfoxai.cn/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8002/api/v1',
   timeout: 30000,
 });
 

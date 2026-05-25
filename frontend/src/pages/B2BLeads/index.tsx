@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react';
 import { Space, Tag, Select, Button, message, Drawer, Descriptions } from 'antd';
 import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { ProTable } from '@ant-design/pro-components';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
@@ -72,14 +71,7 @@ export default function B2BLeads() {
       search: false,
       render: (_, record) =>
         record.contact_email ? (
-          <Space>
-            <span>{record.contact_email}</span>
-            {record.email_verified ? (
-              <CheckCircleOutlined style={{ color: '#52c41a' }} />
-            ) : (
-              <CloseCircleOutlined style={{ color: '#999' }} />
-            )}
-          </Space>
+          <a href={`mailto:${record.contact_email}`}>{record.contact_email}</a>
         ) : (
           <Tag>无邮箱</Tag>
         ),
@@ -112,8 +104,8 @@ export default function B2BLeads() {
       width: 120,
       valueType: 'select',
       valueEnum: {
-        apollo: { text: 'Apollo' },
-        google_maps: { text: 'Google Maps' },
+        google_search: { text: 'Google Search' },
+        osm: { text: 'OpenStreetMap' },
       },
       render: (_, record) => <PlatformIcon platform={record.data_source} />,
     },
@@ -265,16 +257,57 @@ export default function B2BLeads() {
               <Descriptions.Item label="联系邮箱">
                 {currentLead.contact_email ? (
                   <Space>
-                    <span>{currentLead.contact_email}</span>
-                    {currentLead.email_verified ? (
-                      <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                    ) : (
-                      <CloseCircleOutlined style={{ color: '#999' }} />
-                    )}
+                    <a href={`mailto:${currentLead.contact_email}`}>{currentLead.contact_email}</a>
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentLead.contact_email);
+                        message.success('已复制邮箱');
+                      }}
+                    />
                   </Space>
                 ) : (
                   '无邮箱'
                 )}
+              </Descriptions.Item>
+              <Descriptions.Item label="联系电话">
+                {currentLead.contact_phone ? (
+                  <Space>
+                    <span>{currentLead.contact_phone}</span>
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentLead.contact_phone!);
+                        message.success('已复制电话');
+                      }}
+                    />
+                  </Space>
+                ) : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Twitter/X">
+                {currentLead.contact_twitter ? (
+                  <a href={`https://x.com/${currentLead.contact_twitter}`} target="_blank" rel="noreferrer">
+                    @{currentLead.contact_twitter}
+                  </a>
+                ) : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="LinkedIn">
+                {currentLead.contact_linkedin ? (
+                  <a href={currentLead.contact_linkedin} target="_blank" rel="noreferrer">
+                    查看LinkedIn
+                  </a>
+                ) : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Facebook">
+                {currentLead.contact_facebook ? (
+                  <a href={currentLead.contact_facebook} target="_blank" rel="noreferrer">
+                    查看Facebook
+                  </a>
+                ) : '-'}
               </Descriptions.Item>
               <Descriptions.Item label="数据源">
                 <PlatformIcon platform={currentLead.data_source} />

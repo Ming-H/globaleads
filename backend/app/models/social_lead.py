@@ -38,6 +38,10 @@ class SocialLead(Base, IntIDMixin):
     ai_score = Column(Integer, default=0, index=True)
     ai_tags = Column(JSONB, default=[])
     ai_analysis = Column(Text, nullable=True)
+    contact_email = Column(String(255), nullable=True)
+    contact_phone = Column(String(50), nullable=True)
+    contact_website = Column(String(500), nullable=True)
+    contact_social = Column(JSONB, nullable=True)
     status = Column(String(20), default="uncontacted", nullable=False, index=True)
     created_at = Column(
         DateTime,

@@ -89,7 +89,7 @@ class AIService:
             消息列表
         """
         keywords_str = ", ".join(keywords)
-        system_prompt = f"""你是一个专业的海外销售线索分析助手。你的任务是分析社交媒体帖子和评论，判断其中是否包含购买/求购意向。
+        system_prompt = f"""你是一个专业的海外销售线索分析助手。你的任务是分析社交媒体帖子和评论，判断其中是否包含购买/求购意向，并提取联系方式。
 
 搜索关键词：{keywords_str}
 
@@ -98,7 +98,14 @@ class AIService:
     "has_intent": true/false,
     "score": 1-100的评分（100表示购买意向最强）,
     "tags": ["标签1", "标签2"],
-    "analysis": "详细分析说明"
+    "analysis": "详细分析说明",
+    "contacts": {{
+        "email": "邮箱地址或null",
+        "phone": "电话号码或null",
+        "website": "网站URL或null",
+        "twitter": "Twitter/X用户名或null",
+        "linkedin": "LinkedIn链接或null"
+    }}
 }}
 
 评分标准：
@@ -109,6 +116,12 @@ class AIService:
 - 0-29：完全无关或没有购买意向
 
 标签选项：求购、找供应商、询价、比价、问推荐、找替代品、合作、代理、其他
+
+联系方式提取规则：
+- 从帖子内容中提取邮箱、电话、网站、Twitter/X、LinkedIn
+- 如果是帖子作者的个人资料中包含的联系方式也要提取
+- Twitter 用户名不需要 @ 前缀
+- 如果没有找到联系方式，对应字段填 null
 
 注意：
 1. 只返回 JSON，不要额外解释
@@ -142,11 +155,19 @@ class AIService:
                 json_str = response.split("```")[1].split("```")[0].strip()
 
             result = json.loads(json_str)
+            contacts = result.get("contacts", {})
             return {
                 "has_intent": bool(result.get("has_intent", False)),
                 "score": min(100, max(0, int(result.get("score", 0)))),
                 "tags": result.get("tags", []),
                 "analysis": result.get("analysis", ""),
+                "contacts": {
+                    "email": contacts.get("email") or None,
+                    "phone": contacts.get("phone") or None,
+                    "website": contacts.get("website") or None,
+                    "twitter": contacts.get("twitter") or None,
+                    "linkedin": contacts.get("linkedin") or None,
+                },
             }
         except (json.JSONDecodeError, ValueError, KeyError) as e:
             logger.warning(f"AI 响应解析失败: {e}, response={response[:200]}")
@@ -155,6 +176,13 @@ class AIService:
                 "score": 0,
                 "tags": [],
                 "analysis": f"解析失败: {str(e)}",
+                "contacts": {
+                    "email": None,
+                    "phone": None,
+                    "website": None,
+                    "twitter": None,
+                    "linkedin": None,
+                },
             }
 
     async def analyze_purchase_intent(
@@ -263,7 +291,7 @@ class AISyncService:
     def _build_intent_prompt(self, content: str, keywords: list[str]) -> list[dict]:
         """构建购买意向分析 prompt"""
         keywords_str = ", ".join(keywords)
-        system_prompt = f"""你是一个专业的海外销售线索分析助手。你的任务是分析社交媒体帖子和评论，判断其中是否包含购买/求购意向。
+        system_prompt = f"""你是一个专业的海外销售线索分析助手。你的任务是分析社交媒体帖子和评论，判断其中是否包含购买/求购意向，并提取联系方式。
 
 搜索关键词：{keywords_str}
 
@@ -272,7 +300,14 @@ class AISyncService:
     "has_intent": true/false,
     "score": 1-100的评分（100表示购买意向最强）,
     "tags": ["标签1", "标签2"],
-    "analysis": "详细分析说明"
+    "analysis": "详细分析说明",
+    "contacts": {{
+        "email": "邮箱地址或null",
+        "phone": "电话号码或null",
+        "website": "网站URL或null",
+        "twitter": "Twitter/X用户名或null",
+        "linkedin": "LinkedIn链接或null"
+    }}
 }}
 
 评分标准：
@@ -283,6 +318,12 @@ class AISyncService:
 - 0-29：完全无关
 
 标签选项：求购、找供应商、询价、比价、问推荐、找替代品、合作、代理、其他
+
+联系方式提取规则：
+- 从帖子内容中提取邮箱、电话、网站、Twitter/X、LinkedIn
+- 如果是帖子作者的个人资料中包含的联系方式也要提取
+- Twitter 用户名不需要 @ 前缀
+- 如果没有找到联系方式，对应字段填 null
 
 只返回 JSON，不要额外解释。"""
 
@@ -301,11 +342,19 @@ class AISyncService:
                 json_str = response.split("```")[1].split("```")[0].strip()
 
             result = json.loads(json_str)
+            contacts = result.get("contacts", {})
             return {
                 "has_intent": bool(result.get("has_intent", False)),
                 "score": min(100, max(0, int(result.get("score", 0)))),
                 "tags": result.get("tags", []),
                 "analysis": result.get("analysis", ""),
+                "contacts": {
+                    "email": contacts.get("email") or None,
+                    "phone": contacts.get("phone") or None,
+                    "website": contacts.get("website") or None,
+                    "twitter": contacts.get("twitter") or None,
+                    "linkedin": contacts.get("linkedin") or None,
+                },
             }
         except (json.JSONDecodeError, ValueError, KeyError) as e:
             logger.warning(f"AI 响应解析失败: {e}")
@@ -314,6 +363,13 @@ class AISyncService:
                 "score": 0,
                 "tags": [],
                 "analysis": f"解析失败: {str(e)}",
+                "contacts": {
+                    "email": None,
+                    "phone": None,
+                    "website": None,
+                    "twitter": None,
+                    "linkedin": None,
+                },
             }
 
     def analyze_purchase_intent(self, content: str, keywords: list[str]) -> dict:

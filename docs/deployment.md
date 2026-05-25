@@ -152,9 +152,8 @@ REDDIT_CLIENT_ID=<reddit_client_id>
 REDDIT_CLIENT_SECRET=<reddit_client_secret>
 REDDIT_USER_AGENT="GlobalLeads/1.0"
 YOUTUBE_API_KEY=<youtube_api_key>
-APOLLO_API_KEY=<apollo_api_key>
-GOOGLE_MAPS_API_KEY=<google_maps_api_key>
-HUNTER_API_KEY=<hunter_api_key>
+GOOGLE_SEARCH_API_KEY=<google_search_api_key>
+GOOGLE_SEARCH_CX=<google_search_cx>
 
 # 服务端口
 PORT=8002

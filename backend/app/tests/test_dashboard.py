@@ -132,7 +132,7 @@ async def test_get_dashboard_stats_by_source(
     data = response.json()
     by_source = data["b2b_leads"]["by_source"]
     assert isinstance(by_source, dict)
-    # Should have apollo source from test fixture
+    # Should have google_search source from test fixture
     if data["b2b_leads"]["total"] > 0:
         assert len(by_source) > 0
 
@@ -201,7 +201,7 @@ async def test_get_dashboard_stats_success_rate(
     b2b_task = B2BTask(
         user_id=test_user.id,
         name="Completed B2B Task",
-        data_sources=["apollo"],
+        data_sources=["google_search", "osm"],
         status="completed",
         lead_count=10,
     )

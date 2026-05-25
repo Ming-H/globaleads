@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.social_lead import SocialLead
@@ -170,12 +171,13 @@ async def get_dashboard_stats(
     api_usage = {}
     try:
         import redis
-        r = redis.from_url("redis://localhost:6379/1", decode_responses=True)
+        r = redis.from_url(settings.REDIS_URL, decode_responses=True)
         for api_name, limit_str in [
             ("reddit", "60/min"),
             ("bluesky", "3000/5min"),
-            ("apollo", "900"),
-            ("google_maps", "6250"),
+            ("youtube", "10000/day"),
+            ("google_search", "100/day"),
+            ("osm", "unlimited"),
         ]:
             used = int(r.get(f"api_usage:{api_name}" ) or 0)
             api_usage[api_name] = APIUsage(used=used, limit=limit_str)
@@ -184,8 +186,9 @@ async def get_dashboard_stats(
         api_usage = {
             "reddit": APIUsage(used=0, limit="60/min"),
             "bluesky": APIUsage(used=0, limit="3000/5min"),
-            "apollo": APIUsage(used=0, limit="900"),
-            "google_maps": APIUsage(used=0, limit="6250"),
+            "youtube": APIUsage(used=0, limit="10000/day"),
+            "google_search": APIUsage(used=0, limit="100/day"),
+            "osm": APIUsage(used=0, limit="unlimited"),
         }
 
     return StatsResponse(

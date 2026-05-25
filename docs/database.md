@@ -74,6 +74,10 @@ users
 | ai_tags | JSONB | DEFAULT '[]' | AI 意向标签 `["求购", "找供应商"]` |
 | ai_analysis | TEXT | NULL | AI 分析详细结果 |
 | status | VARCHAR(20) | DEFAULT 'uncontacted' | uncontacted/contacted/replied/invalid |
+| contact_email | VARCHAR(255) | NULL | 联系人邮箱 |
+| contact_phone | VARCHAR(50) | NULL | 联系人电话 |
+| contact_website | VARCHAR(500) | NULL | 联系人网站 |
+| contact_social | JSONB | DEFAULT '{}' | 社交媒体链接 `{"twitter": "...", "linkedin": "..."}` |
 | created_at | TIMESTAMP | DEFAULT now() | 创建时间 |
 
 **索引：**
@@ -92,7 +96,7 @@ users
 | industry | VARCHAR(200) | NULL | 目标行业 |
 | region | VARCHAR(200) | NULL | 目标地区 |
 | company_size | VARCHAR(50) | NULL | 公司规模范围 |
-| data_sources | JSONB | NOT NULL | 数据源 `["apollo", "google_maps"]` |
+| data_sources | JSONB | NOT NULL | 数据源 `["google_search", "osm"]` |
 | max_results | INTEGER | DEFAULT 100 | 最大搜索数量 |
 | status | VARCHAR(20) | DEFAULT 'pending' | pending/running/completed/failed/quota_exceeded |
 | error_message | TEXT | NULL | 失败时的错误信息 |
@@ -118,8 +122,10 @@ users
 | contact_title | VARCHAR(200) | NULL | 联系人职位 |
 | contact_email | VARCHAR(255) | NULL | 联系人邮箱 |
 | contact_phone | VARCHAR(50) | NULL | 联系人电话 |
-| email_verified | BOOLEAN | DEFAULT false | 邮箱是否已验证 |
-| data_source | VARCHAR(50) | NOT NULL | 数据来源：apollo/google_maps/hunter |
+| contact_twitter | VARCHAR(200) | NULL | 联系人 Twitter |
+| contact_linkedin | VARCHAR(200) | NULL | 联系人 LinkedIn |
+| contact_facebook | VARCHAR(200) | NULL | 联系人 Facebook |
+| data_source | VARCHAR(50) | NOT NULL | 数据来源：google_search/osm |
 | source_url | VARCHAR(500) | NULL | 来源页面 URL |
 | status | VARCHAR(20) | DEFAULT 'uncontacted' | uncontacted/contacted/replied/invalid |
 | created_at | TIMESTAMP | DEFAULT now() | 创建时间 |

@@ -21,7 +21,9 @@ class B2BLeadResponse(BaseModel):
     contact_title: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
-    email_verified: bool = False
+    contact_twitter: Optional[str] = None
+    contact_linkedin: Optional[str] = None
+    contact_facebook: Optional[str] = None
     data_source: str
     source_url: Optional[str] = None
     status: str

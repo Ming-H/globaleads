@@ -5,7 +5,7 @@
 ## 功能
 
 - **社媒线索挖掘** — 在 Reddit/Bluesky/YouTube 搜索关键词，AI 分析购买意向，返回潜在客户
-- **B2B 客户搜索** — 通过 Apollo/Google Maps API 搜索目标公司和联系人邮箱
+- **B2B 客户搜索** — 通过 Google Search/OpenStreetMap 搜索目标公司，自动提取联系方式
 - **线索管理** — 两个功能各自独立的线索池，支持筛选、排序、导出
 - **数据看板** — 线索统计、趋势分析、API 用量监控
 
