@@ -23,7 +23,7 @@
 
 ```env
 # .env.test
-DATABASE_URL=postgresql+asyncpg://leadmine:<password>@localhost:5432/globaleads_test
+DATABASE_URL=postgresql+asyncpg://globaleads:your_password@localhost:5432/globaleads_test
 REDIS_URL=redis://localhost:6379/2
 AI_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434

@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "GlobalLeads API"
     APP_VERSION: str = "1.0.0"
 
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://globaleads:globaleads_dev@localhost:5432/globaleads"
+    # Database — must be set via .env
+    DATABASE_URL: str = ""
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/1"
@@ -33,8 +33,8 @@ class Settings(BaseSettings):
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     DEEPSEEK_MODEL: str = "deepseek-chat"
 
-    # JWT
-    JWT_SECRET: str = "globaleads-change-this-secret"
+    # JWT — must be set via .env
+    JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_HOURS: int = 72
 

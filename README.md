@@ -56,9 +56,9 @@ npm run dev
 详见 [部署运维文档](docs/deployment.md)
 
 - 后端：阿里云 Docker Compose
-- 前端：Vercel（globaleads.devfoxai.cn）
-- 代码：GitHub 私有仓库
+- 前端：Vercel（your-domain.example.com）
+- 代码：GitHub
 
 ## License
 
-私有项目，未授权禁止使用。
+[MIT](LICENSE)

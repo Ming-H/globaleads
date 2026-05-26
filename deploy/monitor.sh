@@ -2,7 +2,7 @@
 # ============================================================
 # GlobalLeads 服务器监控脚本
 # 部署方式：crontab 每 5 分钟执行一次
-#   */5 * * * * /home/admin/globaleads/deploy/monitor.sh >> /home/admin/globaleads/logs/monitor.log 2>&1
+#   */5 * * * * /opt/globaleads/deploy/monitor.sh >> /opt/globaleads/logs/monitor.log 2>&1
 # ============================================================
 
 set -euo pipefail
@@ -10,7 +10,7 @@ set -euo pipefail
 # ==================== 配置 ====================
 
 # 项目根目录（服务器上的路径）
-PROJECT_DIR="${PROJECT_DIR:-/home/admin/globaleads}"
+PROJECT_DIR="${PROJECT_DIR:-/opt/globaleads}"
 LOG_DIR="${PROJECT_DIR}/logs"
 
 # 告警阈值
@@ -154,9 +154,9 @@ check_containers() {
 
     local containers=("globaleads-backend" "globaleads-celery")
 
-    # LeadMine 容器也一起监控（如果存在）
-    local leadmine_containers=("leadmine-backend" "leadmine-celery-worker")
-    for c in "${leadmine_containers[@]}"; do
+    # 如有其他服务容器也可一并监控
+    local other_containers=()
+    for c in "${other_containers[@]}"; do
         if docker ps --format '{{.Names}}' | grep -q "^${c}$"; then
             containers+=("$c")
         fi
@@ -209,7 +209,6 @@ check_containers() {
 check_postgres() {
     log_info "--- 检查 PostgreSQL ---"
 
-    # 尝试通过 LeadMine 的 postgres 容器连接
     local pg_container
     pg_container=$(docker ps --format '{{.Names}}' | grep postgres | head -1)
 
@@ -219,7 +218,7 @@ check_postgres() {
     fi
 
     local result
-    result=$(docker exec "$pg_container" pg_isready -U leadmine 2>&1) || true
+    result=$(docker exec "$pg_container" pg_isready 2>&1) || true
 
     if echo "$result" | grep -q "accepting connections"; then
         log_info "PostgreSQL 正常 | container=$pg_container"

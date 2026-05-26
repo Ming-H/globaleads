@@ -37,4 +37,7 @@ docker-compose.override.yml
 htmlcov/
 .pytest_cache/
 
+# AI tools
+CLAUDE.md
+
 .vercel

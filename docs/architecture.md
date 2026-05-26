@@ -10,7 +10,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         用户浏览器                           │
-│                  globaleads.devfoxai.cn                      │
+│                  your-domain.example.com                      │
 └──────────────────────────┬──────────────────────────────────┘
                            │ HTTPS
                            ▼
@@ -25,8 +25,8 @@
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │              Nginx (:80 / :443)                      │   │
-│  │  globaleads.devfoxai.cn/api/* → FastAPI :8002       │   │
-│  │  leadmine.devfoxai.cn/api/*   → FastAPI :8000       │   │
+│  │  your-domain.example.com/api/* → FastAPI :8002       │   │
+│  │  your-other-app.example.com/api/*   → FastAPI :8000       │   │
 │  └──────────────────────────┬──────────────────────────┘   │
 │                             │                               │
 │  ┌──────────┐  ┌──────────┐  ┌───────┐  ┌───────────────┐  │
@@ -278,7 +278,7 @@ GlobalLeads 部署在同一台阿里云服务器上，与 LeadMine 共用：
 
 | 资源 | 共用方式 |
 |------|---------|
-| PostgreSQL | 同一个 PG 实例，不同数据库（`leadmine` / `globaleads`） |
+| PostgreSQL | 同一个 PG 实例，不同数据库（`your-other-db / globaleads`） |
 | Redis | 同一个 Redis 实例，不同 DB 编号（DB 0 / DB 1） |
 | Docker | 同一个 Docker 环境 |
 | 服务器 | 同一台 ECS |

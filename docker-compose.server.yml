@@ -1,6 +1,6 @@
 # 生产环境 Docker Compose
 # 使用方式：docker compose -f docker-compose.server.yml up -d --build
-# PostgreSQL 和 Redis 复用 LeadMine 已有的容器，通过 leadmine_default 网络连接
+# PostgreSQL 和 Redis 复用 已有的 PostgreSQL 和 Redis 容器，通过 app_network 网络连接
 
 services:
   backend:
@@ -20,7 +20,7 @@ services:
     volumes:
       - ./logs:/app/logs
     networks:
-      - leadmine_default
+      - app_network
     mem_limit: 256m
     memswap_limit: 320m
     healthcheck:
@@ -49,7 +49,7 @@ services:
     volumes:
       - ./logs:/app/logs
     networks:
-      - leadmine_default
+      - app_network
     mem_limit: 256m
     memswap_limit: 320m
     healthcheck:
@@ -65,5 +65,5 @@ services:
         max-file: "3"
 
 networks:
-  leadmine_default:
+  app_network:
     external: true

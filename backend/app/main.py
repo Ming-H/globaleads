@@ -4,6 +4,7 @@ GlobalLeads FastAPI 主应用
 海外线索挖掘平台 - 帮助中国外贸/跨境电商企业挖掘海外销售线索
 """
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -123,7 +124,7 @@ async def create_default_data():
             admin = User(
                 username="admin",
                 email="admin@globaleads.com",
-                hashed_password=hash_password("admin123"),
+                hashed_password=hash_password(os.getenv("ADMIN_PASSWORD", "changeme")),
                 is_active=True,
             )
             db.add(admin)

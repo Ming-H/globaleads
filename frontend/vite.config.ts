@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   define: {
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
-      process.env.VITE_API_BASE_URL || 'https://globaleads-api.devfoxai.cn/api/v1'
+      process.env.VITE_API_BASE_URL || 'http://localhost:8002/api/v1'
     ),
   },
   server: {

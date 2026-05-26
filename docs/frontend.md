@@ -8,7 +8,7 @@
 ## 1. 页面结构
 
 ```
- globaleads.devfoxai.cn
+ your-domain.example.com
          │
     ─────┴────────────────────────────────
     │              │              │       │

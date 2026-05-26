@@ -7,7 +7,7 @@
 ## 一、阿里云服务器 — 后端部署
 
 ### 1. 数据库准备
-- [ ] 进入已有的 PostgreSQL 容器：`docker exec -it <postgres容器> psql -U leadmine`
+- [ ] 进入已有的 PostgreSQL 容器：`docker exec -it <postgres容器> psql -U globaleads`
 - [ ] 创建数据库：`CREATE DATABASE globaleads;`
 - [ ] 验证：`\l` 确认 globaleads 库已创建
 - [ ] 退出：`\q`
@@ -22,10 +22,10 @@
 **确认 .env 中以下配置正确：**
 ```bash
 # 数据库（连接到 LeadMine 的 PostgreSQL）
-DATABASE_URL=postgresql+asyncpg://leadmine:<密码>@leadmine-db:5432/globaleads
+DATABASE_URL=postgresql+asyncpg://globaleads:your_password@postgres:5432/globaleads
 
 # Redis（连接到 LeadMine 的 Redis）
-REDIS_URL=redis://leadmine-redis:6379/1
+REDIS_URL=redis://redis:6379/1
 
 # AI Provider
 AI_PROVIDER=ollama
@@ -33,7 +33,7 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434
 OLLAMA_MODEL=qwen3:0.6b
 
 # Celery
-CELERY_BROKER_URL=redis://leadmine-redis:6379/1
+CELERY_BROKER_URL=redis://redis:6379/1
 
 # 服务端口
 PORT=8002
@@ -44,7 +44,7 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRE_HOURS=72
 
 # CORS（允许前端域名）
-CORS_ORIGINS=https://globaleads.devfoxai.cn
+CORS_ORIGINS=https://your-domain.example.com
 
 # API Keys（根据实际使用填写）
 REDDIT_CLIENT_ID=
@@ -57,7 +57,7 @@ GOOGLE_SEARCH_CX=
 ```
 
 ### 3. Docker 启动
-- [ ] 确认 LeadMine 网络存在：`docker network ls | grep leadmine`
+- [ ] 确认 应用网络存在：`docker network ls | grep globaleads`
 - [ ] 构建并启动：`docker compose -f docker-compose.server.yml up -d --build`
 - [ ] 检查容器状态：`docker ps | grep globaleads`
 - [ ] 确认以下容器在运行：
@@ -69,13 +69,13 @@ GOOGLE_SEARCH_CX=
   - 预期返回：`{"status":"ok","version":"1.0.0","checks":{"database":"ok","redis":"ok"}}`
 
 ### 4. Nginx 配置
-- [ ] 编辑 Nginx 配置：`sudo vim /etc/nginx/conf.d/devfoxai.conf`
+- [ ] 编辑 Nginx 配置：`sudo vim /etc/nginx/conf.d/example.conf`
 - [ ] 添加 GlobalLeads 反向代理：
 ```nginx
 # GlobalLeads API
 server {
     listen 80;
-    server_name globaleads.devfoxai.cn;
+    server_name your-domain.example.com;
 
     # API 代理
     location /api/ {
@@ -101,13 +101,13 @@ server {
 - [ ] 重载 Nginx：`sudo nginx -s reload`
 
 ### 5. SSL 证书配置
-- [ ] 申请证书：`sudo certbot --nginx -d globaleads.devfoxai.cn`
-- [ ] 验证 HTTPS：`curl https://globaleads.devfoxai.cn/api/health`
+- [ ] 申请证书：`sudo certbot --nginx -d your-domain.example.com`
+- [ ] 验证 HTTPS：`curl https://your-domain.example.com/api/health`
 - [ ] 确认证书自动续期：`sudo certbot renew --dry-run`
 
 ### 6. 日志目录
-- [ ] 创建日志目录：`mkdir -p /home/admin/globaleads/logs`
-- [ ] 设置权限：`chmod 755 /home/admin/globaleads/logs`
+- [ ] 创建日志目录：`mkdir -p /opt/globaleads/logs`
+- [ ] 设置权限：`chmod 755 /opt/globaleads/logs`
 
 ### 7. 监控告警设置
 - [ ] 复制监控配置：`cp deploy/.env.example deploy/.env`
@@ -120,7 +120,7 @@ server {
 - [ ] 确认飞书群收到测试消息
 - [ ] 添加定时任务：`crontab -e`
   ```bash
-  */5 * * * * /home/admin/globaleads/deploy/monitor.sh >> /home/admin/globaleads/logs/monitor.log 2>&1
+  */5 * * * * /opt/globaleads/deploy/monitor.sh >> /opt/globaleads/logs/monitor.log 2>&1
   ```
 
 ### 8. Ollama 服务验证
@@ -133,13 +133,13 @@ server {
 ## 二、DNS 配置（阿里云域名解析）
 
 - [ ] 登录阿里云域名控制台
-- [ ] 找到 `devfoxai.cn` 域名
+- [ ] 找到 `example.com` 域名
 - [ ] 添加 A 记录：
   - 主机记录：`globaleads`
   - 记录类型：`A`
   - 记录值：`<服务器公网IP>`
   - TTL：`600`
-- [ ] 验证解析：`ping globaleads.devfoxai.cn`
+- [ ] 验证解析：`ping your-domain.example.com`
 - [ ] 确认解析到正确的服务器 IP
 
 ---
@@ -162,14 +162,14 @@ server {
 - [ ] 添加以下变量：
   ```bash
   # 生产环境 API 地址
-  VITE_API_BASE_URL=https://globaleads.devfoxai.cn/api/v1
+  VITE_API_BASE_URL=https://your-domain.example.com/api/v1
   ```
 - [ ] 选择环境：`Production` / `Preview` / `Development`
 - [ ] 保存并重新部署
 
 ### 3. 域名绑定
 - [ ] 进入项目 Settings → Domains
-- [ ] 添加域名：`globaleads.devfoxai.cn`
+- [ ] 添加域名：`your-domain.example.com`
 - [ ] Vercel 会提供 CNAME 配置：
   - 主机记录：`globaleads`
   - 记录类型：`CNAME`
@@ -187,12 +187,12 @@ server {
 ## 四、完整功能验证
 
 ### 1. 页面访问
-- [ ] 访问：`https://globaleads.devfoxai.cn`
+- [ ] 访问：`https://your-domain.example.com`
 - [ ] 确认页面正常加载，无 404 错误
 - [ ] 打开浏览器控制台，确认无 API 请求失败
 
 ### 2. 用户认证
-- [ ] 使用默认账号登录：`admin` / `admin123`
+- [ ] 使用默认账号登录：`admin` / `changeme`
 - [ ] 确认登录成功，跳转到 Dashboard
 - [ ] 退出登录，确认跳转到登录页
 
@@ -237,7 +237,7 @@ server {
 ### 更新代码
 ```bash
 # 拉取最新代码
-cd /home/admin/globaleads
+cd /opt/globaleads
 git pull origin main
 
 # 重启服务
@@ -254,11 +254,11 @@ docker logs globaleads-backend --tail 100 -f
 docker logs globaleads-celery --tail 100 -f
 
 # 文件日志（如果配置了文件输出）
-tail -f /home/admin/globaleads/logs/app.log
-tail -f /home/admin/globaleads/logs/celery.log
+tail -f /opt/globaleads/logs/app.log
+tail -f /opt/globaleads/logs/celery.log
 
 # 监控日志
-tail -f /home/admin/globaleads/logs/monitor.log
+tail -f /opt/globaleads/logs/monitor.log
 ```
 
 ### 容器管理
@@ -281,19 +281,19 @@ docker restart globaleads-celery
 ### 数据库操作
 ```bash
 # 进入数据库
-docker exec -it leadmine-db psql -U leadmine -d globaleads
+docker exec -it postgres psql -U globaleads -d globaleads
 
 # 数据库备份
-docker exec leadmine-db pg_dump -U leadmine globaleads > backup_$(date +%Y%m%d_%H%M%S).sql
+docker exec postgres pg_dump -U globaleads globaleads > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # 恢复数据库
-docker exec -i leadmine-db psql -U leadmine globaleads < backup_20260429.sql
+docker exec -i postgres psql -U globaleads globaleads < backup_20260429.sql
 ```
 
 ### Redis 操作
 ```bash
 # 进入 Redis
-docker exec -it leadmine-redis redis-cli
+docker exec -it redis redis-cli
 
 # 查看所有 key
 KEYS *
@@ -324,7 +324,7 @@ FLUSHDB
 
 ### 前端 API 请求失败
 1. 检查浏览器控制台网络请求
-2. 确认 API 地址正确：`https://globaleads.devfoxai.cn/api/v1`
+2. 确认 API 地址正确：`https://your-domain.example.com/api/v1`
 3. 检查 CORS 配置
 4. 检查 Nginx 代理配置
 
